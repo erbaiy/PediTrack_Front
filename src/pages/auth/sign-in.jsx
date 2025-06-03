@@ -1,3 +1,4 @@
+import axiosInstance from "@/api/axiosInstance";
 import {
   Card,
   Input,
@@ -6,9 +7,42 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { HeartIcon } from '@heroicons/react/24/solid';
 
 
 export function SignIn() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      return alert("Please enter both email and password.");
+    }
+
+    try {
+      const res = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+      });
+
+      if (res.status === 200) {
+
+        console.log("Login response:", res.data.data.accessToken);
+        localStorage.setItem("token", res.data.data.accessToken);
+        localStorage.setItem("isAuth", "true");
+        console.log("Login successful");
+        navigate("/dashboard/home");
+      }
+    } catch (error) {
+      alert(error?.response?.data?.message || "Login failed.");
+    }
+  };
+
+
   return (
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
@@ -23,6 +57,9 @@ export function SignIn() {
             </Typography>
             <Input
               size="lg"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="name@mail.com"
               className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
               labelProps={{
@@ -33,6 +70,8 @@ export function SignIn() {
               Password
             </Typography>
             <Input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               type="password"
               size="lg"
               placeholder="********"
@@ -60,25 +99,18 @@ export function SignIn() {
             }
             containerProps={{ className: "-ml-2.5" }}
           />
-          <Button className="mt-6" fullWidth>
+          <Button onClick={handleLogin} className="mt-6" fullWidth>
             Sign In
           </Button>
 
           <div className="flex items-center justify-between gap-2 mt-6">
-            <Checkbox
-              label={
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="flex items-center justify-start font-medium"
-                >
-                  Subscribe me to newsletter
-                </Typography>
-              }
-              containerProps={{ className: "-ml-2.5" }}
-            />
             <Typography variant="small" className="font-medium text-gray-900">
-              <a href="#">
+              <i>
+                don't have an account?
+              </i>
+            </Typography>
+            <Typography variant="small" className="font-medium text-gray-900">
+              <a href="/auth/forget-password">
                 Forgot Password
               </a>
             </Typography>

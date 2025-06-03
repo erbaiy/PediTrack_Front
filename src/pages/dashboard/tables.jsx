@@ -9,7 +9,7 @@ import {
   Progress,
 } from "@material-tailwind/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { authorsTableData, projectsTableData } from "@/data";
+import { getPatientTable, projectsTableData } from "@/data";
 
 export function Tables() {
   return (
@@ -40,13 +40,12 @@ export function Tables() {
               </tr>
             </thead>
             <tbody>
-              {authorsTableData.map(
+              {getPatientTable.map(
                 ({ img, name, email, job, online, date }, key) => {
-                  const className = `py-3 px-5 ${
-                    key === authorsTableData.length - 1
-                      ? ""
-                      : "border-b border-blue-gray-50"
-                  }`;
+                  const className = `py-3 px-5 ${key === getPatientTable.length - 1
+                    ? ""
+                    : "border-b border-blue-gray-50"
+                    }`;
 
                   return (
                     <tr key={name}>
@@ -135,11 +134,10 @@ export function Tables() {
             <tbody>
               {projectsTableData.map(
                 ({ img, name, members, budget, completion }, key) => {
-                  const className = `py-3 px-5 ${
-                    key === projectsTableData.length - 1
-                      ? ""
-                      : "border-b border-blue-gray-50"
-                  }`;
+                  const className = `py-3 px-5 ${key === projectsTableData.length - 1
+                    ? ""
+                    : "border-b border-blue-gray-50"
+                    }`;
 
                   return (
                     <tr key={name}>
@@ -163,9 +161,8 @@ export function Tables() {
                               alt={name}
                               size="xs"
                               variant="circular"
-                              className={`cursor-pointer border-2 border-white ${
-                                key === 0 ? "" : "-ml-2.5"
-                              }`}
+                              className={`cursor-pointer border-2 border-white ${key === 0 ? "" : "-ml-2.5"
+                                }`}
                             />
                           </Tooltip>
                         ))}
