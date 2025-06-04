@@ -3,8 +3,8 @@ import axiosInstance from "@/api/axiosInstance";
 export const getPatientTable = async () => {
   try {
     const res = await axiosInstance.get("/patients");
-    console.log("Patients:", res.data.patients);
-    const patients = Array.isArray(res.data.patients) ? res.data.patients :  []; // fallback
+    console.log("Patients:", res.data);
+    const patients = Array.isArray(res.data) ? res.data :  []; // fallback
 
     return patients.map((patient) => ({
       img: "/img/team-2.jpeg",
@@ -12,7 +12,7 @@ export const getPatientTable = async () => {
       email: patient.gender,
       job: ["still Not spicify"], // Replace if real names are available
       hasRendezvous: false,
-      date: new Date(patient.createdAt).toLocaleDateString("en-US"),
+      date:patient.birthDate?patient.birthDate: "Not specified",
     }));
   } catch (err) {
     console.error("Failed to fetch patients:", err);
