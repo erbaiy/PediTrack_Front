@@ -1,4 +1,5 @@
 import axiosInstance from "@/api/axiosInstance";
+import { toast } from 'react-toastify';
 
 export const createPatient = async (data) => { 
   try {

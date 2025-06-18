@@ -11,6 +11,7 @@ import { SignIn, SignUp } from "@/pages/auth";
 import ForgotPassword from "./pages/auth/forget-password";
 import ResetPassword from "./pages/auth/reset-password";
 import Patient from "./pages/dashboard/patient";
+import PatientDetail from "./pages/dashboard/PatientDetail";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -26,15 +27,21 @@ export const routes = [
         path: "/home",
         element: <Home />,
       },
+       {
+  icon: <HomeIcon {...icon} />,
+  name: "details",
+  path: '/patients/details/:id',
+  element: <PatientDetail />,
+},
       {
         icon: <UserCircleIcon {...icon} />,
-        name: "profile ",
+        name: "profile",
         path: "/profile",
         element: <Profile />,
       },
       {
         icon: <TableCellsIcon {...icon} />,
-        name: "patients ",
+        name: "patients",
         path: "/patients",
         element: <Patient />,
       },
@@ -77,10 +84,9 @@ export const routes = [
       {
         icon: <RectangleStackIcon {...icon} />,
         name: "reset password",
-        path: "/reset-password", // ✅ Now matches ?token=... format
+        path: "/reset-password",
         element: <ResetPassword />,
       },
-
     ],
   },
 ];

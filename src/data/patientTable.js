@@ -4,71 +4,47 @@ export const getPatientTable = async () => {
   try {
     const res = await axiosInstance.get("/patients");
     console.log("Patients:", res.data);
-    const patients = Array.isArray(res.data) ? res.data :  []; // fallback
-
+    
+    const patients = Array.isArray(res.data) ? res.data : []; // fallback
+    
     return patients.map((patient) => ({
+      // Include the original patient ID for appointment booking
+      patientId: patient._id || patient.id,
+      _id: patient._id || patient.id,
+      
+      // Display fields
       img: "/img/team-2.jpeg",
       name: `${patient.firstName} ${patient.lastName}`,
-      email: patient.gender,
-      job: ["still Not spicify"], // Replace if real names are available
-      hasRendezvous: false,
-      date:patient.birthDate?patient.birthDate: "Not specified",
+      email: patient.email || "No email provided", // Use actual email instead of gender
+      
+      // Job field - you might want to replace this with actual data
+      job: ["still Not specify"], // Keep as array for compatibility
+      
+      // Status fields
+      hasRendezvous: patient.hasRendezvous || false,
+      online: patient.online || false, // Add online status
+      
+      // Date field
+      date: patient.birthDate ? patient.birthDate : "Not specified",
+      
+      // Include all original patient data for appointment booking
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      birthDate: patient.birthDate,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      
+      // Include parent information if available
+      parentName: patient.fullName || patient.parentName,
+      parentEmail: patient.email,
+      parentPhone: patient.phoneNumber,
+      
+      // Any other fields you might need
+      ...patient // Spread operator to include any additional fields
     }));
+    
   } catch (err) {
     console.error("Failed to fetch patients:", err);
     return [];
   }
 };
-
-//   [
-//   {
-//     img: "/img/team-2.jpeg",
-//     name: "John Michael",
-//     email: "john@creative-tim.com",
-//     job: ["Manager", "Organization"],
-//     online: true,
-//     date: "23/04/18",
-//   },
-//   {
-//     img: "/img/team-1.jpeg",
-//     name: "Alexa Liras",
-//     email: "alexa@creative-tim.com",
-//     job: ["Programator", "Developer"],
-//     online: false,
-//     date: "11/01/19",
-//   },
-//   {
-//     img: "/img/team-4.jpeg",
-//     name: "Laurent Perrier",
-//     email: "laurent@creative-tim.com",
-//     job: ["Executive", "Projects"],
-//     online: true,
-//     date: "19/09/17",
-//   },
-//   {
-//     img: "/img/team-3.jpeg",
-//     name: "Michael Levi",
-//     email: "michael@creative-tim.com",
-//     job: ["Programator", "Developer"],
-//     online: true,
-//     date: "24/12/08",
-//   },
-//   {
-//     img: "/img/bruce-mars.jpeg",
-//     name: "Bruce Mars",
-//     email: "bruce@creative-tim.com",
-//     job: ["Manager", "Executive"],
-//     online: false,
-//     date: "04/10/21",
-//   },
-//   {
-//     img: "/img/team-2.jpeg",
-//     name: "Alexander",
-//     email: "alexander@creative-tim.com",
-//     job: ["Programator", "Developer"],
-//     online: false,
-//     date: "14/09/20",
-//   },
-// ];
-
-// export default authorsTableData;
