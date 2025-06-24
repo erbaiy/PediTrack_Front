@@ -12,6 +12,10 @@ import ForgotPassword from "./pages/auth/forget-password";
 import ResetPassword from "./pages/auth/reset-password";
 import Patient from "./pages/dashboard/patient";
 import PatientDetail from "./pages/dashboard/PatientDetail";
+import Families from "./pages/dashboard/familes";
+import { UsersIcon } from "@heroicons/react/24/solid";
+import AppointmentsPage from "./pages/appointmentsPage";
+import AppointmentManagement from "./pages/appointmentsPage";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -27,12 +31,10 @@ export const routes = [
         path: "/home",
         element: <Home />,
       },
-       {
-  icon: <HomeIcon {...icon} />,
-  name: "details",
-  path: '/patients/details/:id',
-  element: <PatientDetail />,
-},
+      {
+        path: '/patients/details/:id',
+        element: <PatientDetail />,
+      },
       {
         icon: <UserCircleIcon {...icon} />,
         name: "profile",
@@ -46,16 +48,22 @@ export const routes = [
         element: <Patient />,
       },
       {
-        icon: <TableCellsIcon {...icon} />,
-        name: "tables",
-        path: "/tables",
-        element: <Tables />,
+        icon: <UsersIcon {...icon} />,
+        name: "families",
+        path: "/families",
+        element: <Families />,
       },
       {
         icon: <InformationCircleIcon {...icon} />,
         name: "notifications",
         path: "/notifications",
         element: <Notifications />,
+      },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "appointment calendar",
+        path: "/appointment-calendar",
+        element: <AppointmentManagement />,
       },
     ],
   },

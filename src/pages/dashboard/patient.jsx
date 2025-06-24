@@ -1,5 +1,3 @@
-
-
 import {
   Card,
   CardHeader,
@@ -7,6 +5,8 @@ import {
   Typography,
   Avatar,
   Chip,
+  IconButton,
+  CardFooter,
 } from "@material-tailwind/react";
 import {
   Dialog,
@@ -35,6 +35,8 @@ import axiosInstance from "@/api/axiosInstance";
 import PatientDetailsModal from "./componet/PatientDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { getVaccinationRecords } from "@/data/getVaccinationRecords";
+import { Icon } from "lucide-react";
+import dayjs from "dayjs";
 
 
 // Validation schemas
@@ -124,12 +126,46 @@ export function Patient() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
 
+  const [patientsLength, setPatientsLength] = useState(0);
+
+
+
+  const [searchTerm, setSearchTerm] = useState('');
+const [filterStatus, setFilterStatus] = useState('all');
+const [currentPage, setCurrentPage] = useState(1);
+const [patientsPerPage] = useState(5); // Adjust as needed
+
+
+
+// Filter patients based on search term and status
+const filteredPatients = patients.filter(patient => {
+  const matchesSearch = 
+    patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.parent?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.parent?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  
+  const matchesStatus = 
+    filterStatus === 'all' || 
+    (filterStatus === 'withAppointments' && patient.appointments?.length > 0) ||
+    (filterStatus === 'withoutAppointments' && (!patient.appointments || patient.appointments.length === 0));
+  
+  return matchesSearch && matchesStatus;
+});
+
+// Get current patients for pagination
+const indexOfLastPatient = currentPage * patientsPerPage;
+const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
+const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
+
+// Change page
+const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
 const navigate = useNavigate();
 
 const handleViewDetails = async (patient) => {
   console.log('Navigating to:', `/patients/details/${patient._id}`);
-  const vaccinations = await getVaccinationRecords();
+  const vaccinations = await getVaccinationRecords(patient._id);
   navigate(`/dashboard/patients/details/${patient._id}`, {
     state: {
       patient,
@@ -214,6 +250,8 @@ const handlePatientUpdated = async () => {
     mode: 'onBlur'
   });
 
+
+  
   const handleOpen = async (patient) => {
     setSelectedPatient(patient);
 
@@ -294,9 +332,10 @@ const handlePatientUpdated = async () => {
 
       const response = await createPatient(sanitizedData);
 
-      if (!response.ok) {
+      if (!response) {
         throw new Error('Failed to create patient');
       }
+      setPatientsLength(patientsLength + 1);
 
       toast.success('Patient created successfully!', {
         position: "top-right",
@@ -305,60 +344,22 @@ const handlePatientUpdated = async () => {
 
       handleCreateModalClose();
 
-      const updatedPatients = await getPatientTable();
+      // const updatedPatients = await getPatientTable();
       setPatients(updatedPatients);
 
     } catch (error) {
       console.error('Error creating patient:', error);
-      toast.error(`Error creating patient: ${error.message}`, {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      // toast.error(`Error creating patient: ${error.message}`, {
+      //   position: "top-right",
+      //   autoClose: 5000,
+      // });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // const handleAppointmentSubmit = async (appointmentData) => {
-  //   console.log('selectedpatient:', selectedPatient);
-  //   console.log('Submitting appointment data:', appointmentData);
-  //   // if (isSubmitting) return;
 
-  //   // setIsSubmitting(true);
-
-  //   console.log("submitting data:", appointmentData);
-
-  //   try {
-  //     console.log('Submitting appointment data:', appointmentData);
-  //     const sanitizedAppointmentData = {
-  //       patientId: selectedPatient.patientId, // Assuming patientId is available in selectedPatient
-  //       date: selectedDate,
-  //       time: selectedTime,
-  //       type: sanitizeInput(appointmentData.reason)
-  //     };
-  //     const res = await createAppointment(sanitizedAppointmentData);
-
-  //     toast.success('Appointment booked successfully!', {
-  //       position: "top-right",
-  //       autoClose: 3000,
-  //     });
-
-  //     handleClose();
-
-  //   } catch (error) {
-  //     console.error('Error booking appointment:', error);
-  //     toast.error(`Error booking appointment: ${error.message}`, {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //     });
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-
-
- const handleAppointmentSubmit = async (appointmentData) => {
+const handleAppointmentSubmit = async (appointmentData) => {
   if (isSubmitting) return;
   setIsSubmitting(true);
 
@@ -367,25 +368,33 @@ const handlePatientUpdated = async () => {
       throw new Error('No patient selected or patient ID missing');
     }
 
-    const formattedDate = selectedDate.toISOString().split('T')[0];
+    if (!selectedDate) {
+      throw new Error('Please select a date');
+    }
+
+    if (!selectedTime) {
+      throw new Error('Please select a time');
+    }
+
+    // Properly format the date as YYYY-MM-DD
+    const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD');
 
     const sanitizedAppointmentData = {
       patientId: selectedPatient.patientId,
       date: formattedDate,
       time: selectedTime,
-      type: 'consultation', // Fixed: lowercase 'type' and set default value
-      notes: sanitizeInput(appointmentData.reason) // Using reason as notes
+      type: 'consultation',
+      notes: appointmentData.reason || '' // Use empty string if reason is undefined
     };
 
     console.log('Sending appointment data:', sanitizedAppointmentData);
 
     const res = await createAppointment(sanitizedAppointmentData);
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || 'Failed to create appointment');
+    if (res && res.error) {
+      throw new Error(res.error || 'Failed to create appointment');
     }
-
+  
     toast.success('Appointment booked successfully!', {
       position: "top-right",
       autoClose: 3000,
@@ -451,7 +460,7 @@ const handlePatientUpdated = async () => {
     const patientsData = await getPatientTable();
     setPatients(patientsData);
     console.log('Patients data fetched:', patientsData);
-  }, []);
+  }, [patientsLength]);
 
   // Helper component for form field errors
   const FieldError = ({ error }) => (
@@ -497,19 +506,49 @@ const handlePatientUpdated = async () => {
       <ToastContainer />
 
       <Card>
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6 flex justify-between items-center">
-          <Typography variant="h6" color="white">
-            Patients Table
-          </Typography>
-          <Button
-            size="sm"
-            color="white"
-            variant="filled"
-            onClick={handleCreateModalOpen}
-          >
-            Add New Patient
-          </Button>
-        </CardHeader>
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <Typography variant="h6" color="white">
+      Patients Table
+    </Typography>
+    
+    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+      <Input
+        placeholder="Search patients..."
+        color="white"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setCurrentPage(1); // Reset to first page when searching
+        }}
+        icon={<i className="fas fa-search" />}
+        className="text-white"
+      />
+      
+      <select
+        value={filterStatus}
+        onChange={(e) => {
+          setFilterStatus(e.target.value);
+          setCurrentPage(1); // Reset to first page when filtering
+        }}
+        className="bg-white rounded-md px-3 py-2 text-sm text-gray-700"
+      >
+        <option value="all">All Patients</option>
+        <option value="withAppointments">With Appointments</option>
+        <option value="withoutAppointments">Without Appointments</option>
+      </select>
+      
+      <Button
+        size="sm"
+        color="white"
+        variant="filled"
+        onClick={handleCreateModalOpen}
+      >
+        Add New Patient
+      </Button>
+    </div>
+  </div>
+</CardHeader>
         <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
           <table className="w-full min-w-[640px] table-auto">
             <thead>
@@ -527,7 +566,7 @@ const handlePatientUpdated = async () => {
               </tr>
             </thead>  
 <tbody>
-  {patients.map((patient, key) => {
+ {currentPatients.map((patient, key)  => {
     // Use 'patient' instead of destructuring to avoid confusion
     const className = `py-3 px-5 ${key === patients.length - 1 ? "" : "border-b border-blue-gray-50"}`;
     
@@ -659,6 +698,42 @@ const handlePatientUpdated = async () => {
 </tbody>
           </table>
         </CardBody>
+        <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
+  <Typography variant="small" color="blue-gray" className="font-normal">
+    Showing {indexOfFirstPatient + 1} to {Math.min(indexOfLastPatient, filteredPatients.length)} of {filteredPatients.length} entries
+  </Typography>
+  
+  <div className="flex gap-2">
+    <Button
+      variant="outlined"
+      size="sm"
+      disabled={currentPage === 1}
+      onClick={() => paginate(currentPage - 1)}
+    >
+      Previous
+    </Button>
+    
+    {Array.from({ length: Math.ceil(filteredPatients.length / patientsPerPage) }).map((_, index) => (
+      <IconButton
+        key={index}
+        variant={currentPage === index + 1 ? "filled" : "text"}
+        size="sm"
+        onClick={() => paginate(index + 1)}
+      >
+        {index + 1}
+      </IconButton>
+    ))}
+    
+    <Button
+      variant="outlined"
+      size="sm"
+      disabled={currentPage === Math.ceil(filteredPatients.length / patientsPerPage)}
+      onClick={() => paginate(currentPage + 1)}
+    >
+      Next
+    </Button>
+  </div>
+</CardFooter>
       </Card>
 
       {/* Update Patient Modal */}
