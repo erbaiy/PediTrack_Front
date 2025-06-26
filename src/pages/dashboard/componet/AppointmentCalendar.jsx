@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import dayjs from 'dayjs';
+import 'dayjs/locale/fr'; // Import français pour dayjs
 import {
   Button,
   Typography,
@@ -12,6 +13,9 @@ import {
   Avatar
 } from "@material-tailwind/react";
 
+// Configuration de dayjs en français
+dayjs.locale('fr');
+
 const AppointmentCalendar = ({ 
   appointments = [], 
   patients = [],
@@ -21,11 +25,9 @@ const AppointmentCalendar = ({
   onEditAppointment
 }) => {
 
-
-
   console.log("data passed to child component", appointments, );
 
-  const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8AM to 7PM
+  const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8h à 19h
 
   const getWeekDays = () => {
     const startOfWeek = dayjs(currentDate).startOf('week');
@@ -41,8 +43,8 @@ const AppointmentCalendar = ({
 
   const getPatientInfo = (patientId) => {
     return patients.find(p => p.patientId === patientId) || {
-      firstName: 'Unknown',
-      lastName: 'Patient',
+      firstName: 'Patient',
+      lastName: 'Inconnu',
       img: '/img/team-2.jpeg'
     };
   };
@@ -57,10 +59,30 @@ const AppointmentCalendar = ({
     return styles[type] || 'bg-gray-100 border-gray-300 text-gray-800';
   };
 
+  const getStatusText = (status) => {
+    const statusTexts = {
+      pending: 'En attente',
+      confirmed: 'Confirmé',
+      cancelled: 'Annulé',
+      completed: 'Terminé'
+    };
+    return statusTexts[status] || status;
+  };
+
+  const getTypeText = (type) => {
+    const typeTexts = {
+      consultation: 'Consultation',
+      vaccination: 'Vaccination',
+      surgery: 'Chirurgie',
+      checkup: 'Contrôle'
+    };
+    return typeTexts[type] || type;
+  };
+
   const calculateAppointmentPosition = (appointment) => {
     const [hours, minutes] = appointment.time.split(':').map(Number);
     const top = ((hours - 8) * 64) + (minutes / 60 * 64);
-    const duration = appointment.duration || 60; // Default to 60 minutes
+    const duration = appointment.duration || 60; // Par défaut 60 minutes
     
     return {
       top: `${top}px`,
@@ -92,7 +114,7 @@ const AppointmentCalendar = ({
                 className="px-3 py-1 text-sm"
                 onClick={() => onDateChange(dayjs())}
               >
-                Today
+                Aujourd'hui
               </Button>
               
               <IconButton
@@ -109,7 +131,7 @@ const AppointmentCalendar = ({
       
       <CardBody className="p-0 overflow-auto">
         <div className="flex min-w-max">
-          {/* Time column */}
+          {/* Colonne des heures */}
           <div className="w-16 border-r">
             <div className="h-16 border-b"></div>
             {hours.map(hour => (
@@ -119,13 +141,13 @@ const AppointmentCalendar = ({
                   color="gray" 
                   className="absolute -top-2.5 right-2 text-xs"
                 >
-                  {hour === 12 ? '12 PM' : `${hour % 12} ${hour < 12 ? 'AM' : 'PM'}`}
+                  {hour === 12 ? '12h' : `${hour}h`}
                 </Typography>
               </div>
             ))}
           </div>
           
-          {/* Day columns */}
+          {/* Colonnes des jours */}
           {getWeekDays().map(day => {
             const isToday = day.isSame(dayjs(), 'day');
             const dayAppointments = getAppointmentsForDate(day);
@@ -135,7 +157,7 @@ const AppointmentCalendar = ({
                 key={day.format('DD-MM-YYYY')} 
                 className={`flex-1 min-w-[180px] border-r ${isToday ? 'bg-blue-50' : ''}`}
               >
-                {/* Day header */}
+                {/* En-tête du jour */}
                 <div className={`h-16 border-b flex flex-col items-center justify-center ${
                   isToday ? 'bg-blue-500 text-white' : ''
                 }`}>
@@ -152,9 +174,9 @@ const AppointmentCalendar = ({
                   </Typography>
                 </div>
                 
-                {/* Time slots and appointments */}
+                {/* Créneaux horaires et rendez-vous */}
                 <div className="relative" style={{ height: `${hours.length * 64}px` }}>
-                  {/* Clickable time slots */}
+                  {/* Créneaux horaires cliquables */}
                   {hours.map(hour => (
                     <div 
                       key={hour} 
@@ -163,7 +185,7 @@ const AppointmentCalendar = ({
                     />
                   ))}
                   
-                  {/* Appointments */}
+                  {/* Rendez-vous */}
                   {dayAppointments.map(appointment => {
                     const patient = getPatientInfo(appointment.patientId);
                     const position = calculateAppointmentPosition(appointment);
@@ -187,17 +209,17 @@ const AppointmentCalendar = ({
                               {patient.firstName} {patient.lastName}
                             </Typography>
                             <Typography variant="small" className="text-xs truncate">
-                              {appointment.time} • {appointment.type}
+                              {appointment.time} • {getTypeText(appointment.type)}
                             </Typography>
                             {appointment.status && (
                               <Chip
-                                value={appointment.status}
+                                value={getStatusText(appointment.status)}
                                 color={
                                   appointment.status === 'confirmed' ? 'green' :
                                   appointment.status === 'pending' ? 'amber' : 'red'
                                 }
                                 size="sm"
-                                className="mt-1 capitalize"
+                                className="mt-1"
                               />
                             )}
                           </div>
@@ -222,15 +244,7 @@ export default AppointmentCalendar;
 
 
 // import React from 'react';
-// import { 
-//   ChevronLeft, 
-//   ChevronRight, 
-//   Plus,
-//   MoreVertical,
-//   Search,
-//   Filter,
-//   RefreshCw
-// } from 'lucide-react';
+// import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 // import dayjs from 'dayjs';
 // import {
 //   Button,
@@ -240,19 +254,22 @@ export default AppointmentCalendar;
 //   CardBody,
 //   Chip,
 //   IconButton,
-//   Tooltip,
-//   Input
+//   Avatar
 // } from "@material-tailwind/react";
 
 // const AppointmentCalendar = ({ 
 //   appointments = [], 
-//   onCreateAppointment,
-//   onEditAppointment,
+//   patients = [],
 //   currentDate,
-//   onDateChange
+//   onDateChange,
+//   onTimeSelect,
+//   onEditAppointment
 // }) => {
 
-//   console.log("Appointments:", appointments);
+
+
+//   console.log("data passed to child component", appointments, );
+
 //   const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8AM to 7PM
 
 //   const getWeekDays = () => {
@@ -262,7 +279,17 @@ export default AppointmentCalendar;
 
 //   const getAppointmentsForDate = (date) => {
 //     const dateStr = date.format('YYYY-MM-DD');
-//     return appointments.filter(apt => dayjs(apt.date).format('YYYY-MM-DD') === dateStr);
+//     return appointments.filter(apt => 
+//       dayjs(apt.date).format('YYYY-MM-DD') === dateStr
+//     );
+//   };
+
+//   const getPatientInfo = (patientId) => {
+//     return patients.find(p => p.patientId === patientId) || {
+//       firstName: 'Unknown',
+//       lastName: 'Patient',
+//       img: '/img/team-2.jpeg'
+//     };
 //   };
 
 //   const getAppointmentStyle = (type) => {
@@ -273,6 +300,17 @@ export default AppointmentCalendar;
 //       checkup: 'bg-yellow-100 border-yellow-300 text-yellow-800'
 //     };
 //     return styles[type] || 'bg-gray-100 border-gray-300 text-gray-800';
+//   };
+
+//   const calculateAppointmentPosition = (appointment) => {
+//     const [hours, minutes] = appointment.time.split(':').map(Number);
+//     const top = ((hours - 8) * 64) + (minutes / 60 * 64);
+//     const duration = appointment.duration || 60; // Default to 60 minutes
+    
+//     return {
+//       top: `${top}px`,
+//       height: `${duration / 60 * 64}px`
+//     };
 //   };
 
 //   return (
@@ -310,44 +348,6 @@ export default AppointmentCalendar;
 //                 <ChevronRight className="h-5 w-5" />
 //               </IconButton>
 //             </div>
-//           </div>
-          
-//           <div className="flex items-center gap-2">
-//             <Button
-//               variant="filled"
-//               size="sm"
-//               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-//               onClick={() => onCreateAppointment(dayjs(), '09:00')}
-//             >
-//               <Plus className="h-4 w-4" />
-//               <span>Create</span>
-//             </Button>
-//           </div>
-//         </div>
-        
-//         <div className="mt-4 flex items-center justify-between">
-//           <div className="flex items-center gap-2">
-//             <div className="relative w-64">
-//               <Input
-//                 placeholder="Search appointments..."
-//                 className="pl-10"
-//                 containerProps={{ className: "min-w-0" }}
-//               />
-//               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
-//             </div>
-//           </div>
-          
-//           <div className="flex items-center gap-2">
-//             <Tooltip content="Refresh">
-//               <IconButton variant="text" size="sm">
-//                 <RefreshCw className="h-5 w-5" />
-//               </IconButton>
-//             </Tooltip>
-//             <Tooltip content="Filters">
-//               <IconButton variant="text" size="sm">
-//                 <Filter className="h-5 w-5" />
-//               </IconButton>
-//             </Tooltip>
 //           </div>
 //         </div>
 //       </CardHeader>
@@ -397,52 +397,55 @@ export default AppointmentCalendar;
 //                   </Typography>
 //                 </div>
                 
-//                 {/* Time slots */}
+//                 {/* Time slots and appointments */}
 //                 <div className="relative" style={{ height: `${hours.length * 64}px` }}>
-//                   {/* Hour slots */}
+//                   {/* Clickable time slots */}
 //                   {hours.map(hour => (
 //                     <div 
 //                       key={hour} 
 //                       className="h-16 border-b hover:bg-gray-50 cursor-pointer"
-//                       onClick={() => onCreateAppointment(day, `${hour}:00`)}
+//                       onClick={() => onTimeSelect(day, `${hour}:00`)}
 //                     />
 //                   ))}
                   
 //                   {/* Appointments */}
 //                   {dayAppointments.map(appointment => {
-//                     const [hours, minutes] = appointment.time.split(':').map(Number);
-//                     const top = ((hours - 8) * 64) + (minutes / 60 * 64);
+//                     const patient = getPatientInfo(appointment.patientId);
+//                     const position = calculateAppointmentPosition(appointment);
                     
 //                     return (
 //                       <div
 //                         key={appointment._id}
 //                         className={`absolute left-1 right-1 p-2 rounded border cursor-pointer shadow-sm hover:shadow-md transition-shadow ${getAppointmentStyle(appointment.type)}`}
-//                         style={{
-//                           top: `${top}px`,
-//                           height: `${(appointment.duration || 60) / 60 * 64}px`
-//                         }}
+//                         style={position}
 //                         onClick={() => onEditAppointment(appointment)}
 //                       >
-//                         <div className="flex justify-between items-start">
-//                           <div className="overflow-hidden">
+//                         <div className="flex items-start gap-2 h-full">
+//                           <Avatar 
+//                             src={patient.img} 
+//                             alt={patient.name} 
+//                             size="sm"
+//                             className="mt-1"
+//                           />
+//                           <div className="flex-1 overflow-hidden">
 //                             <Typography variant="small" className="font-semibold truncate">
-//                               {appointment.patientId?.firstName || 'New Appointment'}
+//                               {patient.firstName} {patient.lastName}
 //                             </Typography>
 //                             <Typography variant="small" className="text-xs truncate">
 //                               {appointment.time} • {appointment.type}
 //                             </Typography>
+//                             {appointment.status && (
+//                               <Chip
+//                                 value={appointment.status}
+//                                 color={
+//                                   appointment.status === 'confirmed' ? 'green' :
+//                                   appointment.status === 'pending' ? 'amber' : 'red'
+//                                 }
+//                                 size="sm"
+//                                 className="mt-1 capitalize"
+//                               />
+//                             )}
 //                           </div>
-//                           <IconButton
-//                             variant="text"
-//                             size="sm"
-//                             className="w-6 h-6 -mr-2 -mt-2"
-//                             onClick={(e) => {
-//                               e.stopPropagation();
-//                               onEditAppointment(appointment);
-//                             }}
-//                           >
-//                             <MoreVertical className="h-4 w-4" />
-//                           </IconButton>
 //                         </div>
 //                       </div>
 //                     );
@@ -458,3 +461,4 @@ export default AppointmentCalendar;
 // };
 
 // export default AppointmentCalendar;
+

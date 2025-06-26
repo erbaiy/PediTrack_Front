@@ -10,8 +10,9 @@ import {
   Typography,
   Chip
 } from "@material-tailwind/react";
-import { getPrescriptionStatus, formatDate } from '../../utils/prescriptionUtils';
-import { PRESCRIPTION_STATUS } from '../../constants/prescriptionConstants';
+import { PRESCRIPTION_STATUS } from '@/prescriptionConstants';
+import { getPrescriptionStatus } from '@/utils/prescriptionUtils';
+
 
 export const ViewPrescriptionModal = ({ open, onClose, prescription }) => (
   <Dialog open={open} handler={onClose}>

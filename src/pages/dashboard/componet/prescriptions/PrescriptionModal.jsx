@@ -12,8 +12,8 @@ import {
   Option,
   Typography
 } from "@material-tailwind/react";
-import { COMMON_MEDICATIONS, FREQUENCY_OPTIONS } from '../../constants/prescriptionConstants';
-import { setDurationDays } from '../../utils/prescriptionUtils';
+import { COMMON_MEDICATIONS, FREQUENCY_OPTIONS } from '../../../../constant/patientConstants';
+import { setDurationDays } from '../../../../utils/prescriptionUtils';
 
 export const PrescriptionModal = ({ 
   open, 

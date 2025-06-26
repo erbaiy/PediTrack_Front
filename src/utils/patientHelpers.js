@@ -1,6 +1,6 @@
 // =============================================================================
 // src/utils/patientHelpers.js
-import { STATUS_COLORS, VACCINE_SCHEDULES } from '../constant/patientConstants';
+import { STATUS_COLORS, VACCINE_SCHEDULES } from '../constant/patien  tConstants';
 
 export const getStatusColor = (status) => STATUS_COLORS[status] || STATUS_COLORS.default;
 
