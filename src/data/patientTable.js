@@ -48,3 +48,19 @@ export const getPatientTable = async () => {
     return [];
   }
 };
+
+export const getParents = async () => {
+  try {
+    const res = await axiosInstance.get("/patients/parents");
+    console.log("Parents:", res.data);
+    return res.data;
+  }
+  catch (err) {
+    console.error("Failed to fetch parents:", err);
+    return [];
+  }
+};
+    
+
+    
+  

@@ -31,6 +31,7 @@ export function SignIn() {
         console.log("Réponse de connexion:", res.data.data.accessToken);
         localStorage.setItem("token", res.data.data.accessToken);
         localStorage.setItem("isAuth", "true");
+        localStorage.setItem("doctorName", res.data.data.user.fullName);
         console.log("Connexion réussie");
         navigate("/dashboard/home");
       }

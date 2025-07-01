@@ -2188,62 +2188,338 @@ export function PatientDetail() {
     return !!conflictingAppointment;
   };
 
-  const exportVaccinationPDF = useCallback((vaccination) => {
-    const doc = new jsPDF();
+  // const exportVaccinationPDF = useCallback((vaccination) => {
+  //   const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.setTextColor(40, 53, 147);
-    doc.text("CARNET DE VACCINATION", 105, 20, null, null, "center");
+  //   doc.setFontSize(18);
+  //   doc.setTextColor(40, 53, 147);
+  //   doc.text("CARNET DE VACCINATION", 105, 20, null, null, "center");
     
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Patient: ${patientData.name}`, 20, 40);
-    doc.text(`Date de naissance: ${patientData.age}`, 20, 50);
+  //   doc.setFontSize(12);
+  //   doc.setTextColor(0, 0, 0);
+  //   doc.text(`Patient: ${patientData.name}`, 20, 40);
+  //   doc.text(`Date de naissance: ${patientData.age}`, 20, 50);
     
-    doc.setFontSize(14);
-    doc.setTextColor(25, 118, 210);
-    doc.text(vaccination.vaccine, 20, 70);
+  //   doc.setFontSize(14);
+  //   doc.setTextColor(25, 118, 210);
+  //   doc.text(vaccination.vaccine, 20, 70);
     
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Statut: ${vaccination.status.toUpperCase()}`, 20, 85);
-    doc.text(`Date d'échéance: ${formatDate(vaccination.dueDate)}`, 20, 95);
+  //   doc.setFontSize(12);
+  //   doc.setTextColor(0, 0, 0);
+  //   doc.text(`Statut: ${vaccination.status.toUpperCase()}`, 20, 85);
+  //   doc.text(`Date d'échéance: ${formatDate(vaccination.dueDate)}`, 20, 95);
     
-    if (vaccination.dateAdministered) {
-      doc.text(`Administré: ${formatDate(vaccination.dateAdministered)}`, 20, 105);
+  //   if (vaccination.dateAdministered) {
+  //     doc.text(`Administré: ${formatDate(vaccination.dateAdministered)}`, 20, 105);
+  //   }
+    
+  //   doc.setFontSize(10);
+  //   doc.setTextColor(100);
+  //   doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 20, 150);
+  //   doc.text("Carnet de vaccination officiel - Usage médical", 105, 160, null, null, "center");
+    
+  //   doc.setDrawColor(200);
+  //   doc.rect(15, 15, 180, 150);
+    
+  //   const safeName = (patientData.name || 'patient').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  //   const safeVaccine = (vaccination.vaccine || 'vaccine').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  //   doc.save(`${safeName}_${safeVaccine}.pdf`);
+  // }, [patientData.name]);
+
+
+const exportVaccinationPDF = useCallback(async (vaccination) => {
+  try {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Define colors - using prescription's teal theme
+    const tealPrimary = [45, 150, 150];
+    const tealSecondary = [70, 180, 180];
+    const darkBlue = [25, 35, 85];
+    const mediumGray = [150, 150, 150];
+    const white = [255, 255, 255];
+    const vaccineAccent = [34, 139, 34]; // Green for vaccination theme
+    
+    // Page dimensions
+    const pageWidth = 210;
+    const pageHeight = 297;
+    
+    // === HEADER SECTION (similar to prescription) ===
+    doc.setFillColor(...tealPrimary);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.setFillColor(...tealSecondary);
+    
+    // Decorative ellipses like prescription
+    for (let i = 0; i < 3; i++) {
+      doc.ellipse(pageWidth - 20, 20 + (i * 5), 25 + (i * 3), 15 + (i * 2), 'F');
+    }
+
+    // === LOGO SECTION ===
+    let logoAdded = false;
+    
+    console.log('Vaccination PDF - Clinic logo URL:', clinicLogo);
+    console.log('Vaccination PDF - Logo type:', typeof clinicLogo);
+    
+    if (clinicLogo && clinicLogo !== '/img/default-logo.png') {
+      try {
+        console.log('Attempting to load clinic logo for vaccination:', clinicLogo);
+        let logoBase64;
+        
+        if (clinicLogo.startsWith('data:')) {
+          logoBase64 = clinicLogo;
+          console.log('Using base64 logo directly for vaccination');
+        } else {
+          console.log('Converting URL to base64 for vaccination:', clinicLogo);
+          logoBase64 = await convertImageToBase64(clinicLogo);
+          console.log('Vaccination logo conversion successful, base64 length:', logoBase64.length);
+        }
+        
+        doc.addImage(logoBase64, 'PNG', 8, 8, 20, 20);
+        logoAdded = true;
+        console.log('Logo successfully added to vaccination PDF');
+        
+      } catch (logoError) {
+        console.error('Could not load clinic logo for vaccination PDF:', logoError);
+        console.error('Vaccination logo error details:', {
+          message: logoError.message,
+          stack: logoError.stack,
+          logoUrl: clinicLogo
+        });
+      }
+    } else {
+      console.log('No valid clinic logo provided for vaccination, using fallback');
     }
     
+    // Fallback logo placeholder if logo fails to load
+    if (!logoAdded) {
+      console.log('Using fallback medical cross for vaccination PDF');
+      
+      doc.setDrawColor(...tealPrimary);
+      doc.setFillColor(...white);
+      doc.rect(8, 8, 20, 20, 'FD');
+      
+      // Medical cross symbol as fallback
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(...tealPrimary);
+      doc.line(18, 11, 18, 25); // Vertical line
+      doc.line(11, 18, 25, 18); // Horizontal line
+      
+      // Add vaccination symbol
+      doc.setFontSize(6);
+      doc.setTextColor(...tealPrimary);
+      doc.text("VAX", 18, 23, null, null, "center");
+    }
+
+    // Header text (similar to prescription)
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('CENTRE MÉDICAL', 35, 18);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('SERVICES DE VACCINATION', 35, 25);
+
+    // === DOCTOR INFO SECTION (like prescription) ===
+    const doctorSectionY = 55;
+    doc.setTextColor(...darkBlue);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    const doctorName = localStorage.getItem('doctorName') || 'Médecin';
+    doc.text(`Dr ${doctorName}`, pageWidth / 2, doctorSectionY, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Médecin Vaccinateur', pageWidth / 2, doctorSectionY + 8, { align: 'center' });
     doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 20, 150);
-    doc.text("Carnet de vaccination officiel - Usage médical", 105, 160, null, null, "center");
+    // Generate random ID like prescription
+    const randomId = Math.floor(100000000 + Math.random() * 900000000);
+    doc.text(`ID N° ${randomId}`, pageWidth / 2, doctorSectionY + 15, { align: 'center' });
+
+    // === PATIENT INFO SECTION (form fields like prescription) ===
+    let currentY = doctorSectionY + 35;
+    const createFormField = (label, value, x, y, width = 60) => {
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(label, x, y);
+      const labelWidth = doc.getTextWidth(label);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(...mediumGray);
+      doc.line(x + labelWidth + 2, y + 1, x + labelWidth + width, y + 1);
+      if (value) {
+        doc.setFontSize(9);
+        doc.text(value, x + labelWidth + 4, y - 1);
+      }
+    };
     
-    doc.setDrawColor(200);
-    doc.rect(15, 15, 180, 150);
-    
+    createFormField('N°', vaccination._id?.slice(-6) || '', 20, currentY, 50);
+    createFormField('Date', new Date().toLocaleDateString('fr-FR'), 120, currentY, 50);
+    currentY += 12;
+    createFormField("Nom du patient", patientData.name || '', 20, currentY, 150);
+    currentY += 12;
+    createFormField('Date de naissance', patientData.age ? patientData.age.toString() : '', 20, currentY, 40);
+    createFormField('Âge', patientData.age?.toString() || '', 80, currentY, 25);
+    createFormField('ID Patient', patient._id?.slice(-6) || '', 130, currentY, 40);
+    currentY += 25;
+
+    // === VACCINATION SECTION (like Rx section) ===
+    doc.setFont('times', 'bold');
+    doc.setFontSize(48);
+    doc.setTextColor(...darkBlue);
+    doc.text('VAX :', 20, currentY);
+    doc.setLineWidth(2);
+    doc.setDrawColor(...tealPrimary);
+    doc.line(20, currentY + 3, 60, currentY + 3);
+    currentY += 25;
+
+    // Vaccination details (like medication details)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(...vaccineAccent);
+    doc.text(vaccination.vaccine || 'Nom du vaccin', 20, currentY);
+    currentY += 12;
+
+    // Status with color coding
+    const statusColor = vaccination.status === 'done' ? [0, 150, 0] : 
+                       vaccination.status === 'pending' ? [255, 165, 0] : [255, 0, 0];
+    doc.setTextColor(...statusColor);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    const statusText = vaccination.status === 'done' ? 'COMPLÉTÉ' : 
+                      vaccination.status === 'pending' ? 'EN ATTENTE' : 'EN RETARD';
+    doc.text(`Statut: ${statusText}`, 20, currentY);
+    currentY += 20;
+
+    // === VACCINATION SCHEDULE (like dosage instructions) ===
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.text('Date d\'échéance', 20, currentY);
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(...mediumGray);
+    doc.line(65, currentY + 1, 145, currentY + 1);
+    if (vaccination.dueDate) {
+      doc.setFontSize(10);
+      doc.text(formatDate(vaccination.dueDate), 70, currentY - 1);
+    }
+    currentY += 15;
+
+    if (vaccination.dateAdministered) {
+      doc.text('Date d\'administration', 20, currentY);
+      doc.line(85, currentY + 1, 165, currentY + 1);
+      doc.setFontSize(10);
+      doc.text(formatDate(vaccination.dateAdministered), 90, currentY - 1);
+      currentY += 15;
+    }
+
+    if (vaccination.batchNumber) {
+      doc.setFontSize(11);
+      doc.text('Numéro de lot', 20, currentY);
+      doc.line(65, currentY + 1, 145, currentY + 1);
+      doc.setFontSize(10);
+      doc.text(vaccination.batchNumber, 70, currentY - 1);
+      currentY += 15;
+    }
+
+    // === PROVIDER LOCATION (like prescription timing) ===
+    currentY += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.text('Lieu d\'administration', 20, currentY);
+    const location = vaccination.location || 'Centre Médical';
+    doc.setLineWidth(0.3);
+    doc.line(85, currentY + 1, 180, currentY + 1);
+    doc.setFontSize(10);
+    doc.text(location, 90, currentY - 1);
+    currentY += 20;
+
+    // === SPECIAL INSTRUCTIONS (like prescription notes) ===
+    if (vaccination.notes && vaccination.notes.trim()) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('Instructions spéciales :', 20, currentY);
+      currentY += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      const noteLines = doc.splitTextToSize(vaccination.notes, 170);
+      doc.text(noteLines, 20, currentY);
+      currentY += noteLines.length * 5 + 5;
+    }
+
+    // === VALIDITY SECTION ===
+    currentY += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...mediumGray);
+    const nextDueDate = calculateNextDueDate(vaccination);
+    if (nextDueDate && vaccination.status === 'done') {
+      doc.text(`Validité : Valide jusqu'à ${formatDate(nextDueDate)}`, 20, currentY);
+    } else {
+      doc.text(`Statut actuel : ${statusText}`, 20, currentY);
+    }
+
+    // === QR CODE SECTION ===
+    const qrX = 150;
+    const qrY = Math.max(currentY - 40, 180);
+    doc.setDrawColor(...mediumGray);
+    doc.rect(qrX, qrY, 30, 30);
+    doc.setFontSize(8);
+    doc.setTextColor(...mediumGray);
+    doc.text("QR CODE", qrX + 15, qrY + 17, null, null, "center");
+    doc.text("VERIFICATION", qrX + 15, qrY + 22, null, null, "center");
+
+    // === SIGNATURE SECTION (like prescription) ===
+    currentY = Math.max(currentY + 20, 220);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.text("Signature du médecin", 20, currentY);
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, currentY + 8, 80, currentY + 8);
+    doc.text('Date', 120, currentY);
+    doc.line(120, currentY + 8, 160, currentY + 8);
+    doc.setFontSize(9);
+    doc.text(new Date().toLocaleDateString('fr-FR'), 125, currentY + 6);
+
+    // === FOOTER SECTION (like prescription) ===
+    const footerY = pageHeight - 20;
+    doc.setFillColor(...tealPrimary);
+    doc.rect(0, footerY - 8, pageWidth, 20, 'F');
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('123, Rue Exemple', 20, footerY);
+    doc.text('CENTRE DE VACCINATION MÉDICAL', pageWidth / 2, footerY, { align: 'center' });
+    doc.text('+00 123 456 789', pageWidth - 20, footerY, { align: 'right' });
+
+    // === WATERMARK (like prescription Rx) ===
+    doc.setTextColor(250, 250, 250);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(60);
+    doc.text('VAX', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+
+    // === VERIFICATION CODE ===
+    const verificationCode = `VAX-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    doc.setTextColor(...mediumGray);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Code de vérification: ${verificationCode}`, pageWidth / 2, footerY - 12, { align: 'center' });
+
+    // === GENERATE FILENAME AND SAVE ===
     const safeName = (patientData.name || 'patient').replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const safeVaccine = (vaccination.vaccine || 'vaccine').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    doc.save(`${safeName}_${safeVaccine}.pdf`);
-  }, [patientData.name]);
-
-  // const exportPrescriptionPDF = useCallback(async (prescription) => {
-  //   try {
-  //     const doc = new jsPDF('p', 'mm', 'a4');
-      
-  //     // ... (le reste du code PDF reste identique mais avec des textes en français)
-      
-  //     doc.save(`prescription_${patientData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
-  //     toast.success('PDF de prescription généré avec succès !');
-      
-  //   } catch (error) {
-  //     console.error('Erreur lors de la génération du PDF de prescription:', error);
-  //     toast.error('Échec de la génération du PDF de prescription. Veuillez réessayer.');
-  //   }
-  // }, [patientData, formatDate, clinicLogo]);
-
-
-
-
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    doc.save(`certificat_vaccination_${safeName}_${safeVaccine}_${timestamp}.pdf`);
+    
+    // Success notification
+    toast.success('Certificat de vaccination généré avec succès !');
+    
+  } catch (error) {
+    console.error('Erreur lors de la génération du PDF de vaccination :', error);
+    toast.error('Échec de la génération du PDF de vaccination. Veuillez réessayer.');
+  }
+}, [patientData, patient, formatDate, clinicLogo, calculateNextDueDate]);
 // Updated exportPrescriptionPDF function
 const exportPrescriptionPDF = useCallback(async (prescription) => {
   try {
@@ -2264,19 +2540,69 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
       doc.ellipse(pageWidth - 20, 20 + (i * 5), 25 + (i * 3), 15 + (i * 2), 'F');
     }
 
-    // Logo
+    // === LOGO SECTION ===
     let logoAdded = false;
+    
+    // Debug logging
+    console.log('Prescription PDF - Clinic logo URL:', clinicLogo);
+    console.log('Prescription PDF - Logo type:', typeof clinicLogo);
+    
     if (clinicLogo && clinicLogo !== '/img/default-logo.png') {
       try {
-        let logoBase64 = clinicLogo.startsWith('data:') ? clinicLogo : await convertImageToBase64(clinicLogo);
+        console.log('Attempting to load clinic logo for prescription:', clinicLogo);
+        let logoBase64;
+        
+        // If it's already a data URL (base64), use it directly
+        if (clinicLogo.startsWith('data:')) {
+          logoBase64 = clinicLogo;
+          console.log('Using base64 logo directly for prescription');
+        } 
+        // If it's a URL (like your localhost URL), convert it to base64
+        else {
+          console.log('Converting URL to base64 for prescription:', clinicLogo);
+          logoBase64 = await convertImageToBase64(clinicLogo);
+          console.log('Prescription logo conversion successful, base64 length:', logoBase64.length);
+        }
+        
+        // Add the logo to PDF with proper sizing
         doc.addImage(logoBase64, 'PNG', 8, 8, 20, 20);
         logoAdded = true;
-      } catch {} 
+        console.log('Logo successfully added to prescription PDF');
+        
+      } catch (logoError) {
+        console.error('Could not load clinic logo for prescription PDF:', logoError);
+        console.error('Prescription logo error details:', {
+          message: logoError.message,
+          stack: logoError.stack,
+          logoUrl: clinicLogo
+        });
+        // Will fall back to placeholder below
+      }
+    } else {
+      console.log('No valid clinic logo provided for prescription, using fallback');
     }
+    
+    // Fallback logo placeholder if logo fails to load
     if (!logoAdded) {
+      console.log('Using fallback medical cross for prescription PDF');
+      
+      // Create a more sophisticated medical cross
+      doc.setDrawColor(...tealPrimary);
       doc.setFillColor(...white);
-      doc.rect(17, 12, 2, 8, 'F');
-      doc.rect(14, 15, 8, 2, 'F');
+      doc.rect(8, 8, 20, 20, 'FD');
+      
+      // Medical cross symbol as fallback
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(...tealPrimary);
+      // Vertical line of cross
+      doc.line(18, 11, 18, 25);
+      // Horizontal line of cross
+      doc.line(11, 18, 25, 18);
+      
+      // Add small medical symbol
+      doc.setFontSize(6);
+      doc.setTextColor(...tealPrimary);
+      doc.text("Rx", 18, 23, null, null, "center");
     }
 
     // Texte en-tête
@@ -2293,13 +2619,16 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
     doc.setTextColor(...darkBlue);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
-    doc.text('Dr LISA BLOOM', pageWidth / 2, doctorSectionY, { align: 'center' });
+    const doctorName = localStorage.getItem('doctorName') || 'Médecin';
+    doc.text(`Dr ${doctorName}`, pageWidth / 2, doctorSectionY, { align: 'center' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text('ENDOCRINOLOGUE', pageWidth / 2, doctorSectionY + 8, { align: 'center' });
+    doc.text('Pédiatre', pageWidth / 2, doctorSectionY + 8, { align: 'center' });
     doc.setFontSize(10);
-    doc.text('ID N° 123456789', pageWidth / 2, doctorSectionY + 15, { align: 'center' });
+    // Générer un numéro d'identification aléatoire à 9 chiffres
+    const randomId = Math.floor(100000000 + Math.random() * 900000000);
+    doc.text(`ID N° ${randomId}`, pageWidth / 2, doctorSectionY + 15, { align: 'center' });
 
     // Infos patient
     let currentY = doctorSectionY + 35;
@@ -2317,12 +2646,13 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
         doc.text(value, x + labelWidth + 4, y - 1);
       }
     };
+    
     createFormField('N°', '', 20, currentY, 50);
     createFormField('Date', new Date().toLocaleDateString('fr-FR'), 120, currentY, 50);
     currentY += 12;
     createFormField("Nom du patient", patientData.name || '', 20, currentY, 150);
     currentY += 12;
-    createFormField('Date de naissance', '', 20, currentY, 40);
+    createFormField('Date de naissance', patientData.age ? patientData.age.toString() : '', 20, currentY, 40);
     createFormField('Âge', patientData.age?.toString() || '', 80, currentY, 25);
     createFormField('Sexe', patientData.gender || '', 130, currentY, 40);
     currentY += 25;
@@ -2467,12 +2797,12 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
     const timestamp = new Date().toISOString().split('T')[0];
     doc.save(`prescription_${safeName}_${safeMed}_${timestamp}.pdf`);
     toast.success('PDF de prescription généré avec succès !');
+    
   } catch (error) {
     console.error('Erreur lors de la génération du PDF de prescription :', error);
     toast.error('Échec de la génération du PDF de prescription. Veuillez réessayer.');
   }
 }, [patientData, formatDate, clinicLogo]);
-
 
   const updateFilter = useCallback((field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));

@@ -15,3 +15,19 @@ export const createPatient = async (data) => {
     throw error;
   }
 }
+
+
+
+  export const createParent = async (data) => {
+    try {
+      const response = await axiosInstance.post("/patients/create-parent", data);
+      toast.success('Parent created successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error creating parent:", error);
+      throw error;
+    }
+  }
