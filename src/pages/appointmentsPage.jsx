@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 const AppointmentCalendar = React.lazy(() => import('./dashboard/component/AppointmentCalendar'));
-import AppointmentList from "./dashboard/component/AppointmentList";
+const AppointmentList = React.lazy(() => import("./dashboard/component/appointmentList"));
   
 import { useAppointmentPricing } from './dashboard/sitting/AppointmentPricing';
 
