@@ -163,7 +163,6 @@ const calculateNextDueDate = (vaccination) => {
   
   return nextDueDate.toISOString().split('T')[0];
 };
-
 const calculateBMI = (weight, height) => {
   if (!weight || !height || weight <= 0 || height <= 0) return 0;
   const heightInMeters = height / 100;
@@ -171,23 +170,93 @@ const calculateBMI = (weight, height) => {
 };
 
 const getBMICategory = (bmi, age) => {
-  if (age < 2) return "N/A";
-  if (bmi < 18.5) return "Insuffisance pondérale";
-  if (bmi >= 18.5 && bmi < 25) return "Poids normal";
-  if (bmi >= 25 && bmi < 30) return "Surpoids";
-  return "Obésité";
-};
-
-const getBMICategoryColor = (category) => {
-  switch (category) {
-    case "Poids normal": return "#4caf50";
-    case "Insuffisance pondérale": return "#ff9800";
-    case "Surpoids": return "#f44336";
-    case "Obésité": return "#d32f2f";
-    default: return "#9e9e9e";
+  // For children under 2 years, BMI categories are not applicable
+  if (age !== undefined && age < 2) return "N/A";
+  
+  // Retrieve categories from localStorage, fallback to defaults if not set
+  const savedCategories = localStorage.getItem('bmiCategories');
+  let categories;
+  
+  try {
+    categories = savedCategories ? JSON.parse(savedCategories) : BMI_CATEGORIES_DEFAULT;
+  } catch (e) {
+    categories = BMI_CATEGORIES_DEFAULT;
   }
+
+  // Convert the range strings to numeric values
+  const parsedCategories = categories.map(category => {
+    const range = category.range;
+    let min, max;
+    
+    if (range.includes("<")) {
+      max = parseFloat(range.replace("<", "").trim());
+      min = 0;
+    } else if (range.includes("≥")) {
+      min = parseFloat(range.replace("≥", "").trim());
+      max = Infinity;
+    } else if (range.includes("-")) {
+      const parts = range.split("-").map(part => parseFloat(part.trim()));
+      min = parts[0];
+      max = parts[1];
+    }
+    
+    return {
+      ...category,
+      min,
+      max
+    };
+  });
+
+  // Sort categories by their range values
+  parsedCategories.sort((a, b) => a.min - b.min);
+
+  // Find the matching category
+  const matchingCategory = parsedCategories.find(cat => {
+    return bmi >= cat.min && (isNaN(cat.max) || bmi < cat.max);
+  });
+
+  return matchingCategory ? matchingCategory.name : "N/A";
 };
 
+const getBMICategoryColor = (categoryName) => {
+  // Retrieve categories from localStorage, fallback to defaults if not set
+  const savedCategories = localStorage.getItem('bmiCategories');
+  let categories;
+  
+  try {
+    categories = savedCategories ? JSON.parse(savedCategories) : BMI_CATEGORIES_DEFAULT;
+  } catch (e) {
+    categories = BMI_CATEGORIES_DEFAULT;
+  }
+
+  // Find the category by name
+  const category = categories.find(cat => cat.name === categoryName);
+  
+  if (!category) return "#9e9e9e"; // Default gray color
+  
+  // Map color names to hex values
+  const colorMap = {
+    red: "#f44336",
+    orange: "#ff9800",
+    amber: "#ffc107",
+    yellow: "#ffeb3b",
+    lime: "#cddc39",
+    green: "#4caf50",
+    emerald: "#009688",
+    teal: "#009688",
+    cyan: "#00bcd4",
+    sky: "#03a9f4",
+    blue: "#2196f3",
+    indigo: "#3f51b5",
+    violet: "#673ab7",
+    purple: "#9c27b0",
+    fuchsia: "#e91e63",
+    pink: "#e91e63",
+    rose: "#e91e63"
+  };
+  
+  return colorMap[category.color] || "#9e9e9e";
+};
 // Composants d'aide traduits
 const VaccinationStatusCard = ({ 
   filteredVaccinations, 
@@ -723,7 +792,7 @@ const GrowthRecordsTable = ({ records, patientAge, onDelete, loading }) => (
                   </td>
                   <td className="p-4 border-b border-blue-gray-50">
                     <Chip
-                      value={getBMICategory(record.bmi, patientAge)}
+                      value={getBMICategory(record.bmi)}
                       color={getBMICategoryColor(getBMICategory(record.bmi, patientAge))}
                       size="sm"
                     />
@@ -769,7 +838,6 @@ const GrowthRecordsTable = ({ records, patientAge, onDelete, loading }) => (
       </Typography>
     </div> */}
 
-    <BMICategoryEditor />
   </>
 );
 
@@ -1570,7 +1638,7 @@ export function PatientDetail() {
   const doctorLogo = async () => {
     try {
       const response = await getLogo();
-      setClinicLogo(`http://localhost:3005/${response.logo}`);
+      setClinicLogo(`${import.meta.env.VITE_API_BASE_URL}/${response.logo}`);
     } catch (error) {
       console.error('Erreur lors de la récupération du logo:', error);
       setClinicLogo('/img/default-logo.png');
@@ -2907,6 +2975,7 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
                 </Typography>
                 <Typography variant="small" className="font-normal text-blue-gray-600">
                   {patientData.age} • {patientData.gender} • Groupe sanguin: {patientData.bloodType}
+                  • Tarif: {patientData.insuranceProvider || "Non renseigné"}
                 </Typography>
               </div>
             </div>

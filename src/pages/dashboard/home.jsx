@@ -24,7 +24,7 @@ import {
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import axiosInstance from "@/api/axiosInstance";
-
+import { useAppointmentPricing } from './sitting/AppointmentPricing';
 
 // ===== API SERVICE =====
 class DashboardApi {
@@ -105,6 +105,9 @@ const useDashboard = () => {
 
 // ===== COMPOSANTS =====
 function StatisticsCard({ color, icon, title, value, footer }) {
+
+    const { calculatePrice } = useAppointmentPricing();
+ 
   return (
     <Card className="border border-blue-gray-100 shadow-sm">
       <CardHeader
@@ -203,6 +206,19 @@ function StatisticsChart({ color, title, description, footer, chart }) {
 export function Home() {
   const { data, loading, error, refresh } = useDashboard();
   const [refreshing, setRefreshing] = useState(false);
+  const { calculatePrice } = useAppointmentPricing();
+
+  // Calculate revenue using localStorage pricing and backend data
+  const calculateTotalRevenue = () => {
+    if (!data || !data.revenue) return 0;
+    
+    // data.revenue[0] = estimated monthly consultations
+    // data.revenue[1] = vaccinations this month
+    const consultationRevenue = data.revenue[0] * calculatePrice('consultation');
+    const vaccinationRevenue = data.revenue[1] * calculatePrice('vaccination');
+    
+    return consultationRevenue + vaccinationRevenue;
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -317,22 +333,26 @@ export function Home() {
       }
     },
     {
-      color: "gray",
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-          <path d="M8 15c.67-1.33 2-2 4-2s3.33.67 4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx="9" cy="10" r="1" fill="currentColor"/>
-          <circle cx="15" cy="10" r="1" fill="currentColor"/>
-        </svg>
-      ),
-      title: "Revenus",
-      value: `${data.revenue?.toLocaleString() ?? "0"}€`,
-      footer: {
-        color: "text-green-500",
-        value: data.revenueGrowth ? `${data.revenueGrowth > 0 ? "+" : ""}${data.revenueGrowth}%` : "+0%",
-        label: "ce mois"
-      }
+       color: "gray",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+        <path d="M8 15c.67-1.33 2-2 4-2s3.33.67 4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="9" cy="10" r="1" fill="currentColor"/>
+        <circle cx="15" cy="10" r="1" fill="currentColor"/>
+      </svg>
+    ),
+    title: "Revenus",
+    value: (
+      <>
+        {calculateTotalRevenue()} <span className="text-xs">MAD</span>
+      </>
+    ),
+    footer: {
+      color: "text-green-500",
+      value: "+0%",
+      label: "ce mois"
+    }
     }
   ];
 

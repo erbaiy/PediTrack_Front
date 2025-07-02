@@ -217,7 +217,7 @@ function DocumentViewer() {
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(document.url);
   const documentUrl = document.url.startsWith('http') 
     ? document.url 
-    : `http://localhost:3005/${document.url}`;
+    : `${import.meta.env.VITE_API_BASE_URL}/${document.url}`;
 
   return (
     <div className={`min-h-screen bg-gray-50 ${fullscreen ? 'fixed inset-0 z-50' : ''}`}>

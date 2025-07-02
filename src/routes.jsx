@@ -16,10 +16,12 @@ import Families from "./pages/dashboard/familes";
 import { UsersIcon } from "@heroicons/react/24/solid";
 import AppointmentsPage from "./pages/appointmentsPage";
 import AppointmentManagement from "./pages/appointmentsPage";
-import LogoUploadPage from "./pages/dashboard/componet/Patient/Prescriptions/LogoUploadModal";
+import LogoUploadPage from "./pages/dashboard/sitting/LogoUploadModal";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import ProtectedRoute from "./gard";
 import DocumentViewer from "./pages/dashboard/componet/DocumentViewer";
+import SettingsPage from "./pages/dashboard/sitting/SettingsPage";
+import { CalendarDaysIcon } from "lucide-react";
 
 // Helper to mark protected routes - now wraps with ProtectedRoute component
 const protectedRoute = (route) => ({
@@ -48,7 +50,7 @@ export const routes = [
         element: <PatientDetail />,
         showInSidebar: false,
       }),
-        protectedRoute({
+      protectedRoute({
         path: '/documents/:id',
         element: <DocumentViewer />,
         showInSidebar: false,
@@ -67,16 +69,16 @@ export const routes = [
         element: <Families />,
         showInSidebar: true,
       }),
+      // protectedRoute({
+      //   icon: <InformationCircleIcon {...icon} />,
+      //   name: "notifications",
+      //   path: "/notifications",
+      //   element: <Notifications />,
+      //   showInSidebar: true,
+      // }),
       protectedRoute({
-        icon: <InformationCircleIcon {...icon} />,
-        name: "notifications",
-        path: "/notifications",
-        element: <Notifications />,
-        showInSidebar: true,
-      }),
-      protectedRoute({
-        icon: <TableCellsIcon {...icon} />,
-        name: " rendez-vous",
+        icon: <CalendarDaysIcon {...icon} />, // Use a calendar-related icon for appointments
+        name: "rendez-vous",
         path: "/appointment-calendar",
         element: <AppointmentManagement />,
         showInSidebar: true,
@@ -85,11 +87,10 @@ export const routes = [
         icon: <Cog6ToothIcon {...icon} />,
         name: "paramètres",
         path: "/settings",
-        element: <LogoUploadPage/>,
+        element: <SettingsPage />,
         showInSidebar: true,
       }),
 
-      
     ],
   },
   {
