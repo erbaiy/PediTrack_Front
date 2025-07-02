@@ -40,9 +40,9 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import dayjs from 'dayjs';
-const AppointmentCalendar = React.lazy(() => import('./dashboard/componet/AppointmentCalendar'));
+const AppointmentCalendar = React.lazy(() => import('./dashboard/component/AppointmentCalendar'));
 import AppointmentList from "./dashboard/component/AppointmentList";
-
+  
 import { useAppointmentPricing } from './dashboard/sitting/AppointmentPricing';
 
 const CustomStepper = ({ activeStep, flowType, setActiveStep }) => {

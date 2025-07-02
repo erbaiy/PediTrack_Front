@@ -13,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import AppointmentPricing from './AppointmentPricing';
 import LogoUpload from './LogoUploadModal';
-import BMICategoryEditor from '../componet/BMICategoryEditor';
+import BMICategoryEditor from '../component/BMICategoryEditor';
 import { ScaleIcon } from 'lucide-react';
 
 const SettingsPage = ({

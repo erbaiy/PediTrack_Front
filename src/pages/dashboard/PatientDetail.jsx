@@ -64,7 +64,7 @@ import {
 } from 'recharts';
 import Calendar from 'react-calendar';
 import { getLogo } from '@/data/sitting';
-import BMICategoryEditor from './componet/BMICategoryEditor';
+import BMICategoryEditor from './component/BMICategoryEditor';
 
 const convertImageToBase64 = (url) => {
   return new Promise((resolve, reject) => {

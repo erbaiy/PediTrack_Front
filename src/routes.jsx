@@ -19,7 +19,7 @@ import AppointmentManagement from "./pages/appointmentsPage";
 import LogoUploadPage from "./pages/dashboard/sitting/LogoUploadModal";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import ProtectedRoute from "./gard";
-import DocumentViewer from "./pages/dashboard/componet/DocumentViewer";
+import DocumentViewer from "./pages/dashboard/component/DocumentViewer";
 import SettingsPage from "./pages/dashboard/sitting/SettingsPage";
 import { CalendarDaysIcon } from "lucide-react";
 

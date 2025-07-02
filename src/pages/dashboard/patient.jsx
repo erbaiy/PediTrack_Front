@@ -17,7 +17,7 @@ import {
   Input,
   Textarea
 } from "@material-tailwind/react";
-import UpdatePatientModal from './componet/UpdatePatientModal'; 
+import UpdatePatientModal from './component/UpdatePatientModal'; 
 
 import { useEffect, useState } from "react";
 import { useForm, Controller, set } from "react-hook-form";
@@ -32,7 +32,7 @@ import 'react-calendar/dist/Calendar.css';
 import { createAppointment, getAppointments } from "@/data/appointmentsData";
 import axios from "axios";
 import axiosInstance from "@/api/axiosInstance";
-import PatientDetailsModal from "./componet/PatientDetailsModal";
+import PatientDetailsModal from "./component/PatientDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { getVaccinationRecords } from "@/data/getVaccinationRecords";
 import { Icon } from "lucide-react";
