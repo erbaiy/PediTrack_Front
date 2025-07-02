@@ -41,7 +41,8 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 const AppointmentCalendar = React.lazy(() => import('./dashboard/componet/AppointmentCalendar'));
-const AppointmentList = React.lazy(() => import('./dashboard/componet/AppointmentList'));
+import AppointmentList from "./dashboard/component/AppointmentList";
+
 import { useAppointmentPricing } from './dashboard/sitting/AppointmentPricing';
 
 const CustomStepper = ({ activeStep, flowType, setActiveStep }) => {
