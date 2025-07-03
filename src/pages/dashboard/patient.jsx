@@ -125,15 +125,12 @@ export function Patient() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
-
   const [patientsLength, setPatientsLength] = useState(0);
 
-
-
   const [searchTerm, setSearchTerm] = useState('');
-const [filterStatus, setFilterStatus] = useState('all');
-const [currentPage, setCurrentPage] = useState(1);
-const [patientsPerPage] = useState(5); // Adjust as needed
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [patientsPerPage] = useState(5); // Adjust as needed
 
 
 
@@ -456,20 +453,19 @@ const handleAppointmentSubmit = async (appointmentData) => {
     }
   };
 
-  useEffect(() => async () => {
-    const patientsData = await getPatientTable();
-    setPatients(patientsData);
-    console.log('Patients data fetched:', patientsData);
-  }, [patientsLength]);
+ useEffect(() => {
+  const fetchPatients = async () => {
+    try {
+      const patientsData = await getPatientTable();
+      setPatients(patientsData);
+      console.log('Patients data fetched:', patientsData);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    }
+  };
 
-  // Helper component for form field errors
-  const FieldError = ({ error }) => (
-    error ? (
-      <Typography variant="small" color="red" className="mt-1 text-xs">
-        {error.message}
-      </Typography>
-    ) : null
-  );
+  fetchPatients();
+}, [patientsLength]);
 
 
   const handleDelete = async (patientId) => {
