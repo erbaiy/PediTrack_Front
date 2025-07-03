@@ -22,7 +22,7 @@ export function Dashboard() {
           sidenavType === "dark" ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"
         }
       />
-      <div className="p-4 xl:ml-80">
+      <div className="p-4 xl:ml-80 min-h-screen flex flex-col">
         <DashboardNavbar />
         <Configurator />
         <IconButton
@@ -34,16 +34,22 @@ export function Dashboard() {
         >
           <Cog6ToothIcon className="h-5 w-5" />
         </IconButton>
-        <Routes>
-          {routes.map(
-            ({ layout, pages }) =>
-              layout === "dashboard" &&
-              pages.map(({ path, element }) => (
-                <Route exact path={path} element={element} />
-              ))
-          )}
-        </Routes>
-        <div className="text-blue-gray-600">
+        
+        {/* Main content area - takes remaining space */}
+        <main className="flex-1 py-4">
+          <Routes>
+            {routes.map(
+              ({ layout, pages }) =>
+                layout === "dashboard" &&
+                pages.map(({ path, element }) => (
+                  <Route key={path} exact path={path} element={element} />
+                ))
+            )}
+          </Routes>
+        </main>
+        
+        {/* Footer - stays at bottom */}
+        <div className="text-blue-gray-600 mt-auto">
           <Footer />
         </div>
       </div>

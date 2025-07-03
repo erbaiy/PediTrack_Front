@@ -660,16 +660,15 @@ if (flowType === 'existing') {
         <Typography variant="h5" className="text-gray-800 font-semibold mb-6">
           Sélectionner un Patient
         </Typography>
-        
         <div className="space-y-2">
-          <Select 
+          <Select
             label="Sélectionner un Patient"
             value={selectedPatient}
             onChange={(value) => setSelectedPatient(value)}
             error={!selectedPatient}
             className="w-full"
             menuProps={{
-              className: "max-h-60 overflow-y-auto z-50",
+              className: "max-h-36 overflow-y-auto z-50 !absolute !left-0 !top-full !w-full", // 3 items, dropdown under select, full width
               style: { zIndex: 9999 }
             }}
             containerProps={{
@@ -684,7 +683,6 @@ if (flowType === 'existing') {
               </Option>
             ))}
           </Select>
-          
           {!selectedPatient && (
             <Typography variant="small" color="red" className="mt-2 text-red-600">
               Veuillez sélectionner un patient pour continuer

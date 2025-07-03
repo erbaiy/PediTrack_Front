@@ -2979,36 +2979,36 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
                 </Typography>
               </div>
             </div>
-            <div className="w-100 lg:w-1/3">
-              <Tabs value={activeTab}>
-                <TabsHeader>
-                  <Tab value="overview" onClick={() => setActiveTab("overview")}>
-                    <HomeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Aperçu
-                  </Tab>
-                  <Tab value="documents" onClick={() => setActiveTab("documents")}>
-                    <DocumentTextIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Documents
-                  </Tab>
-                  <Tab value="vaccinations" onClick={() => setActiveTab("vaccinations")}>
-                    <ShieldCheckIcon className="-mt-0.5 mr-2 inline-block h-5 w-5" />
-                    Vaccinations
-                  </Tab>
-                  <Tab value="growth" onClick={() => setActiveTab("growth")}>
-                    <ChartBarIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Croissance
-                  </Tab>
-                  <Tab value="appointments" onClick={() => setActiveTab("appointments")}>
-                    <CalendarDaysIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Rendez-vous
-                  </Tab>
-                  <Tab value="prescriptions" onClick={() => setActiveTab("prescriptions")}>
-                    <DocumentTextIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Prescriptions
-                  </Tab>
-                </TabsHeader>
-              </Tabs>
-            </div>
+        <div className="w-full  lg:w-auto" style={{ maxWidth: '400px' }}> 
+                <Tabs  className="overflow-x-auto"  value={activeTab}>
+                  <TabsHeader className="flex-nowrap whitespace-nowrap">
+                    <Tab value="overview" onClick={() => setActiveTab("overview")}>
+                      <HomeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                      Aperçu
+                    </Tab>
+                    <Tab value="documents" onClick={() => setActiveTab("documents")}>
+                      <DocumentTextIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                      Documents
+                    </Tab>
+                    <Tab value="vaccinations" onClick={() => setActiveTab("vaccinations")}>
+                      <ShieldCheckIcon className="-mt-0.5 mr-2 inline-block h-5 w-5" />
+                      Vaccinations
+                    </Tab>
+                    <Tab value="growth" onClick={() => setActiveTab("growth")}>
+                      <ChartBarIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                      Croissance
+                    </Tab>
+                    <Tab value="appointments" onClick={() => setActiveTab("appointments")}>
+                      <CalendarDaysIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                      Rendez-vous
+                    </Tab>
+                    <Tab value="prescriptions" onClick={() => setActiveTab("prescriptions")}>
+                      <DocumentTextIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                      Prescriptions
+                    </Tab>
+                  </TabsHeader>
+                </Tabs>
+         </div>
           </div>
 
           {/* Contenu des onglets */}

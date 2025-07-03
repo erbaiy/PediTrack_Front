@@ -6,19 +6,19 @@ export function Footer({ brandName, brandLink, routes }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="py-2">
+    <footer className="py-2 mt-auto bg-gray-50 border-t border-gray-200">
       <div className="flex w-full flex-wrap items-center justify-center gap-6 px-2 md:justify-between">
         <Typography variant="small" className="font-normal text-inherit">
-          &copy; {year}, made with{" "}
-          <HeartIcon className="-mt-0.5 inline-block h-3.5 w-3.5 text-red-600" /> by{" "}
+          &copy; {year}, créé avec{" "}
+          <HeartIcon className="-mt-0.5 inline-block h-3.5 w-3.5 text-red-600" /> par{" "}
           <a
             href={'https://www.pchalle.com/'}
             target="_blank"
             className="transition-colors hover:text-blue-500 font-bold"
           >
-           Y.pcHalle
+            Y.pcHalle
           </a>{" "}
-          for a better web.
+          pour un web meilleur.
         </Typography>
         <ul className="flex items-center gap-4">
           {routes.map(({ name, path }) => (
@@ -41,13 +41,12 @@ export function Footer({ brandName, brandLink, routes }) {
 }
 
 Footer.defaultProps = {
-  brandName: "Center for Pediatric Healthcare",
+  brandName: "Centre de Soins Pédiatriques",
   brandLink: "https://www.pchalle.com/",
   routes: [
-   
-    { name: "About Us", path: "https://www.pchalle.com/" },
+    { name: "À Propos", path: "https://www.pchalle.com/" },
     { name: "Blog", path: "https://www.pchalle.com/" },
-    { name: "License", path: "https://www.pchalle.com/" },
+    { name: "Licence", path: "https://www.pchalle.com/" },
   ],
 };
 
