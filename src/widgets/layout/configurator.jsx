@@ -55,6 +55,15 @@ export function Configurator() {
     pink: "from-pink-400 to-pink-600",
   };
 
+  const colorNames = {
+    white: "Blanc",
+    dark: "Sombre",
+    green: "Vert",
+    orange: "Orange",
+    red: "Rouge",
+    pink: "Rose",
+  };
+
   React.useEffect(() => {
     const stars = fetch(
       "https://api.github.com/repos/creativetimofficial/material-tailwind-dashboard-react"
@@ -72,10 +81,10 @@ export function Configurator() {
       <div className="flex items-start justify-between px-6 pt-8 pb-6">
         <div>
           <Typography variant="h5" color="blue-gray">
-            Dashboard Configurator
+            Configurateur du Tableau de Bord
           </Typography>
           <Typography className="font-normal text-blue-gray-600">
-            See our dashboard options.
+            Découvrez les options de votre tableau de bord.
           </Typography>
         </div>
         <IconButton
@@ -89,56 +98,123 @@ export function Configurator() {
       <div className="py-4 px-6">
         <div className="mb-12">
           <Typography variant="h6" color="blue-gray">
-            Sidenav Colors
+            Couleurs de la Barre Latérale
           </Typography>
-          <div className="mt-3 flex items-center gap-2">
+          <Typography variant="small" color="gray" className="mt-1 mb-3">
+            Choisissez une couleur pour votre barre latérale
+          </Typography>
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             {Object.keys(sidenavColors).map((color) => (
-              <span
-                key={color}
-                className={`h-6 w-6 cursor-pointer rounded-full border bg-gradient-to-br transition-transform hover:scale-105 ${
-                  sidenavColors[color]
-                } ${
-                  sidenavColor === color ? "border-black" : "border-transparent"
-                }`}
-                onClick={() => setSidenavColor(dispatch, color)}
-              />
+              <div key={color} className="flex flex-col items-center gap-1">
+                <span
+                  className={`h-8 w-8 cursor-pointer rounded-full border-2 bg-gradient-to-br transition-all duration-200 hover:scale-110 hover:shadow-lg ${
+                    sidenavColors[color]
+                  } ${
+                    sidenavColor === color ? "border-black shadow-md scale-105" : "border-gray-300"
+                  }`}
+                  onClick={() => setSidenavColor(dispatch, color)}
+                  title={colorNames[color]}
+                />
+                <Typography variant="small" className="text-xs text-gray-600">
+                  {colorNames[color]}
+                </Typography>
+              </div>
             ))}
           </div>
         </div>
+        
         <div className="mb-12">
           <Typography variant="h6" color="blue-gray">
-            Sidenav Types
+            Types de Barre Latérale
           </Typography>
-          <Typography variant="small" color="gray">
-            Choose between 3 different sidenav types.
+          <Typography variant="small" color="gray" className="mt-1 mb-3">
+            Choisissez parmi 3 types différents de barre latérale
           </Typography>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-col gap-2">
             <Button
               variant={sidenavType === "dark" ? "gradient" : "outlined"}
               onClick={() => setSidenavType(dispatch, "dark")}
+              className="justify-start"
+              size="sm"
             >
-              Dark
+              🌙 Sombre
             </Button>
             <Button
               variant={sidenavType === "transparent" ? "gradient" : "outlined"}
               onClick={() => setSidenavType(dispatch, "transparent")}
+              className="justify-start"
+              size="sm"
             >
-              Transparent
+              ✨ Transparent
             </Button>
             <Button
               variant={sidenavType === "white" ? "gradient" : "outlined"}
               onClick={() => setSidenavType(dispatch, "white")}
+              className="justify-start"
+              size="sm"
             >
-              White
+              ☀️ Blanc
             </Button>
           </div>
         </div>
-        <div className="mb-12">
-          <hr />
-        
-          
+
+        <div className="mb-8">
+          <hr className="border-blue-gray-50" />
         </div>
-      
+
+        <div className="mb-12">
+          <Typography variant="h6" color="blue-gray">
+            Barre de Navigation
+          </Typography>
+          <Typography variant="small" color="gray" className="mt-1 mb-3">
+            Configurez le comportement de la barre de navigation
+          </Typography>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <Typography variant="small" color="blue-gray" className="font-medium">
+                Barre Fixe
+              </Typography>
+              <Typography variant="small" color="gray">
+                Maintenir la barre en haut
+              </Typography>
+            </div>
+            <Switch
+              checked={fixedNavbar}
+              onChange={() => setFixedNavbar(dispatch, !fixedNavbar)}
+              color="blue"
+            />
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <hr className="border-blue-gray-50" />
+        </div>
+
+        <div className="text-center">
+          <Typography variant="h6" color="blue-gray" className="mb-2">
+            Centre de Soins Pédiatriques
+          </Typography>
+          <Typography variant="small" color="gray" className="mb-4">
+            Système de gestion moderne et intuitif
+          </Typography>
+          <div className="flex justify-center gap-2 mb-4">
+            <Chip
+              value="v2.1.0"
+              variant="gradient"
+              color="blue"
+              className="text-xs"
+            />
+            <Chip
+              value="React"
+              variant="outlined"
+              color="blue"
+              className="text-xs"
+            />
+          </div>
+          <Typography variant="small" color="gray">
+            Conçu avec ❤️ pour une meilleure expérience utilisateur
+          </Typography>
+        </div>
       </div>
     </aside>
   );
