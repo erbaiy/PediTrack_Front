@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,Suspense  } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
@@ -1251,8 +1251,32 @@ return (
           </Tab>
         </TabsHeader>
       </Tabs>
-      
+
       {activeTab === 'calendar' && (
+  <Suspense fallback={<div className="flex justify-center items-center h-64">Chargement du calendrier...</div>}>
+    <AppointmentCalendar
+      appointments={appointments}
+      patients={patients}
+      currentDate={currentDate}
+      onDateChange={setCurrentDate}
+      onTimeSelect={handleCalendarTimeSelect}
+      onEditAppointment={handleEditAppointment}
+    />
+  </Suspense>
+)}
+
+{activeTab === 'list' && (
+  <Suspense fallback={<div className="flex justify-center items-center h-64">Chargement de la liste...</div>}>
+    <AppointmentList
+      appointments={appointments}
+      patients={patients}
+      onEditAppointment={handleEditAppointment}
+      onDeleteAppointment={handleDeleteAppointment}
+    />
+  </Suspense>
+)}
+      
+      {/* {activeTab === 'calendar' && (
         <AppointmentCalendar
           appointments={appointments}
           patients={patients}
@@ -1270,7 +1294,7 @@ return (
           onEditAppointment={handleEditAppointment}
           onDeleteAppointment={handleDeleteAppointment}
         />
-      )}
+      )} */}
       
       <Dialog open={isPatientModalOpen} handler={closeAllModals} size="xl">
         <DialogHeader>
