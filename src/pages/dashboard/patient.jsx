@@ -1,3 +1,5 @@
+
+
 import {
   Card,
   CardHeader,
@@ -18,9 +20,11 @@ import {
   Textarea
 } from "@material-tailwind/react";
 import UpdatePatientModal from './component/UpdatePatientModal'; 
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 import { useEffect, useState } from "react";
-import { useForm, Controller, set } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import { toast, ToastContainer } from 'react-toastify';
@@ -38,6 +42,39 @@ import { getVaccinationRecords } from "@/data/getVaccinationRecords";
 import { Icon } from "lucide-react";
 import dayjs from "dayjs";
 
+// International Phone Input Component
+const InternationalPhoneInput = ({ value, onChange, error, onBlur }) => {
+  return (
+    <div className="relative">
+      <PhoneInput
+        international
+        defaultCountry="MA"
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        className={`w-full p-3 border rounded-md focus:outline-none ${
+          error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+        }`}
+      />
+      {error && (
+        <Typography variant="small" color="red" className="mt-1 text-xs">
+          {error}
+        </Typography>
+      )}
+      <Typography variant="small" color="gray" className="mt-1 text-xs">
+        Format: +212612345678 (Maroc par défaut)
+      </Typography>
+    </div>
+  );
+};
+
+// Helper component for form field errors
+const FieldError = ({ error }) =>
+  error ? (
+    <Typography variant="small" color="red" className="mt-1 text-xs">
+      {error.message}
+    </Typography>
+  ) : null;
 
 // Validation schemas - Messages en français
 const parentInfoSchema = Yup.object().shape({
@@ -55,9 +92,12 @@ const parentInfoSchema = Yup.object().shape({
     .trim(),
   phoneNumber: Yup.string()
     .required('Le numéro de téléphone est requis')
-    .matches(/^[\d\s\-\+\(\)]+$/, 'Veuillez entrer un numéro de téléphone valide')
-    .min(10, 'Le numéro de téléphone doit contenir au moins 10 chiffres')
-    .max(20, 'Le numéro de téléphone ne doit pas dépasser 20 caractères')
+    .matches(
+      /^\+[1-9]\d{1,14}$/,
+      'Le numéro doit être au format international (ex: +212612345678)'
+    )
+    .min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres')
+    .max(15, 'Le numéro de téléphone ne doit pas dépasser 15 caractères')
     .trim()
 });
 
@@ -112,9 +152,6 @@ const TIME_SLOTS = [
   "15:00", "15:30", "16:00", "16:30", "17:00"
 ];
 
-
-
-
 export function Patient() {
   const [open, setOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -126,94 +163,18 @@ export function Patient() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [patientsLength, setPatientsLength] = useState(0);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [patientsPerPage] = useState(5); // Adjust as needed
+  const [patientsPerPage] = useState(5);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [patientToView, setPatientToView] = useState(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [patientToUpdate, setPatientToUpdate] = useState(null);
 
+  const navigate = useNavigate();
 
-
-// Filter patients based on search term and status
-const filteredPatients = patients.filter(patient => {
-  const matchesSearch = 
-    patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.parent?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.parent?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-  
-  const matchesStatus = 
-    filterStatus === 'all' || 
-    (filterStatus === 'withAppointments' && patient.appointments?.length > 0) ||
-    (filterStatus === 'withoutAppointments' && (!patient.appointments || patient.appointments.length === 0));
-  
-  return matchesSearch && matchesStatus;
-});
-
-// Get current patients for pagination
-const indexOfLastPatient = currentPage * patientsPerPage;
-const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
-const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
-
-// Change page
-const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-const navigate = useNavigate();
-
-const handleViewDetails = async (patient) => {
-  console.log('Navigating to:', `/patients/details/${patient._id}`);
-  const vaccinations = await getVaccinationRecords(patient._id);
-  navigate(`/dashboard/patients/details/${patient._id}`, {
-    state: {
-      patient,
-      vaccinations, 
-      appointments: patient.appointments || []
-    }
-  });
-};
-
-const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-const [patientToView, setPatientToView] = useState(null);
-
-// Add these handler functions (around line 125)
-const handleViewDetailsOpen = (patient) => {
-  setPatientToView(patient);
-  setDetailsModalOpen(true);
-};
-
-const handleViewDetailsClose = () => {
-  setDetailsModalOpen(false);
-  setPatientToView(null);
-};
-
-
-  // Add these state variables in your Patient component
-const [updateModalOpen, setUpdateModalOpen] = useState(false);
-const [patientToUpdate, setPatientToUpdate] = useState(null);
-
-// Add these handler functions in your Patient component
-const handleUpdateModalOpen = (patient) => {
-  setPatientToUpdate(patient);
-  setUpdateModalOpen(true);
-};
-
-const handleUpdateModalClose = () => {
-  setUpdateModalOpen(false);
-  setPatientToUpdate(null);
-};
-
-const handlePatientUpdated = async () => {
-  try {
-    const updatedPatients = await getPatientTable();
-    setPatients(updatedPatients);
-    toast.success('Liste des patients actualisée');
-  } catch (error) {
-    console.error('Error refreshing patient list:', error);
-    toast.error('Échec de l\'actualisation de la liste des patients');
-  }
-};
-
-  // React Hook Form setup for parent info
+  // React Hook Form setup
   const parentForm = useForm({
     resolver: yupResolver(parentInfoSchema),
     defaultValues: {
@@ -224,7 +185,6 @@ const handlePatientUpdated = async () => {
     mode: 'onBlur'
   });
 
-  // React Hook Form setup for patient info
   const patientForm = useForm({
     resolver: yupResolver(patientInfoSchema),
     defaultValues: {
@@ -236,7 +196,6 @@ const handlePatientUpdated = async () => {
     mode: 'onBlur'
   });
 
-  // React Hook Form setup for appointment
   const appointmentForm = useForm({
     resolver: yupResolver(appointmentSchema),
     defaultValues: {
@@ -247,12 +206,73 @@ const handlePatientUpdated = async () => {
     mode: 'onBlur'
   });
 
+  // Filter and pagination logic
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = 
+      patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.parent?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.parent?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = 
+      filterStatus === 'all' || 
+      (filterStatus === 'withAppointments' && patient.appointments?.length > 0) ||
+      (filterStatus === 'withoutAppointments' && (!patient.appointments || patient.appointments.length === 0));
+    
+    return matchesSearch && matchesStatus;
+  });
 
-  
+  const indexOfLastPatient = currentPage * patientsPerPage;
+  const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
+  const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Handlers
+  const handleViewDetails = async (patient) => {
+    const vaccinations = await getVaccinationRecords(patient._id);
+    navigate(`/dashboard/patients/details/${patient._id}`, {
+      state: {
+        patient,
+        vaccinations, 
+        appointments: patient.appointments || []
+      }
+    });
+  };
+
+  const handleViewDetailsOpen = (patient) => {
+    setPatientToView(patient);
+    setDetailsModalOpen(true);
+  };
+
+  const handleViewDetailsClose = () => {
+    setDetailsModalOpen(false);
+    setPatientToView(null);
+  };
+
+  const handleUpdateModalOpen = (patient) => {
+    setPatientToUpdate(patient);
+    setUpdateModalOpen(true);
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setPatientToUpdate(null);
+  };
+
+  const handlePatientUpdated = async () => {
+    try {
+      const updatedPatients = await getPatientTable();
+      setPatients(updatedPatients);
+      toast.success('Liste des patients actualisée');
+    } catch (error) {
+      console.error('Error refreshing patient list:', error);
+      toast.error('Échec de l\'actualisation de la liste des patients');
+    }
+  };
+
   const handleOpen = async (patient) => {
     setSelectedPatient(patient);
-
-    console.log('Selected patient:', patient);
     setOpen(true);
     appointmentForm.reset();
     setSelectedDate(null);
@@ -309,16 +329,21 @@ const handlePatientUpdated = async () => {
 
   const handleCreatePatient = async (patientData) => {
     if (isSubmitting) return;
-
     setIsSubmitting(true);
 
     try {
       const parentData = parentForm.getValues();
 
+      // Ensure phone number is properly formatted
+      let phoneNumber = parentData.phoneNumber;
+      if (phoneNumber && !phoneNumber.startsWith('+')) {
+        phoneNumber = `+${phoneNumber.replace(/^\+/, '')}`;
+      }
+
       const sanitizedData = {
         fullName: sanitizeInput(parentData.fullName),
         email: sanitizeInput(parentData.email.toLowerCase()),
-        phoneNumber: sanitizeInput(parentData.phoneNumber),
+        phoneNumber: sanitizeInput(phoneNumber),
         firstName: sanitizeInput(patientData.firstName),
         lastName: sanitizeInput(patientData.lastName),
         birthDate: patientData.birthDate,
@@ -340,81 +365,77 @@ const handlePatientUpdated = async () => {
       });
 
       handleCreateModalClose();
-
-      // const updatedPatients = await getPatientTable();
+      const updatedPatients = await getPatientTable();
       setPatients(updatedPatients);
 
     } catch (error) {
       console.error('Error creating patient:', error);
-      // toast.error(`Erreur lors de la création du patient: ${error.message}`, {
-      //   position: "top-right",
-      //   autoClose: 5000,
-      // });
+      toast.error(`Erreur lors de la création du patient: ${error.message}`, {
+        position: "top-right",
+        autoClose: 5000,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleAppointmentSubmit = async (appointmentData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-const handleAppointmentSubmit = async (appointmentData) => {
-  if (isSubmitting) return;
-  setIsSubmitting(true);
+    try {
+      if (!selectedPatient || !selectedPatient.patientId) {
+        throw new Error('Aucun patient sélectionné ou ID patient manquant');
+      }
 
-  try {
-    if (!selectedPatient || !selectedPatient.patientId) {
-      throw new Error('Aucun patient sélectionné ou ID patient manquant');
+      if (!selectedDate) {
+        throw new Error('Veuillez sélectionner une date');
+      }
+
+      if (!selectedTime) {
+        throw new Error('Veuillez sélectionner une heure');
+      }
+
+      const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD');
+
+      const sanitizedAppointmentData = {
+        patientId: selectedPatient.patientId,
+        date: formattedDate,
+        time: selectedTime,
+        type: 'consultation',
+        notes: appointmentData.reason || ''
+      };
+
+      const res = await createAppointment(sanitizedAppointmentData);
+
+      if (res && res.error) {
+        throw new Error(res.error || 'Échec de la création du rendez-vous');
+      }
+    
+      toast.success('Rendez-vous réservé avec succès !', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+
+      handleClose();
+
+      const updatedAppointments = await getAppointments();
+      setAppointments(updatedAppointments);
+
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast.error(`Erreur lors de la réservation du rendez-vous: ${error.message}`, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    if (!selectedDate) {
-      throw new Error('Veuillez sélectionner une date');
-    }
-
-    if (!selectedTime) {
-      throw new Error('Veuillez sélectionner une heure');
-    }
-
-    // Properly format the date as YYYY-MM-DD
-    const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD');
-
-    const sanitizedAppointmentData = {
-      patientId: selectedPatient.patientId,
-      date: formattedDate,
-      time: selectedTime,
-      type: 'consultation',
-      notes: appointmentData.reason || '' // Use empty string if reason is undefined
-    };
-
-    console.log('Sending appointment data:', sanitizedAppointmentData);
-
-    const res = await createAppointment(sanitizedAppointmentData);
-
-    if (res && res.error) {
-      throw new Error(res.error || 'Échec de la création du rendez-vous');
-    }
-  
-    toast.success('Rendez-vous réservé avec succès !', {
-      position: "top-right",
-      autoClose: 3000,
-    });
-
-    handleClose();
-
-    const updatedAppointments = await getAppointments();
-    setAppointments(updatedAppointments);
-
-  } catch (error) {
-    console.error('Error booking appointment:', error);
-    toast.error(`Erreur lors de la réservation du rendez-vous: ${error.message}`, {
-      position: "top-right",
-      autoClose: 5000,
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
   const handleDateChange = (date) => {
     setSelectedDate(date);
-    setSelectedTime(null); // Reset time when date changes
+    setSelectedTime(null);
   };
 
   const handleTimeSelect = (time) => {
@@ -433,7 +454,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
   };
 
   const tileDisabled = ({ date, view }) => {
-    // Disable dates in the past
     if (view === 'month') {
       return date < new Date(new Date().setHours(0, 0, 0, 0));
     }
@@ -453,24 +473,20 @@ const handleAppointmentSubmit = async (appointmentData) => {
     }
   };
 
- useEffect(() => {
-  const fetchPatients = async () => {
-    try {
-      const patientsData = await getPatientTable();
-      setPatients(patientsData);
-      console.log('Patients data fetched:', patientsData);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const patientsData = await getPatientTable();
+        setPatients(patientsData);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+      }
+    };
 
-  fetchPatients();
-}, [patientsLength]);
-
+    fetchPatients();
+  }, [patientsLength]);
 
   const handleDelete = async (patientId) => {
-
-    console.log('Deleting patient with ID:', patientId);
     if (!patientId) {
       toast.error('ID du patient manquant');
       return;
@@ -478,13 +494,11 @@ const handleAppointmentSubmit = async (appointmentData) => {
 
     try {
       const response = await axiosInstance.delete(`patients/${patientId}`);
-
       toast.success('Patient supprimé avec succès !', {
         position: "top-right",
         autoClose: 3000,
       });
 
-      // Refresh the patients list
       const updatedPatients = await getPatientTable();
       setPatients(updatedPatients);
 
@@ -508,7 +522,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
               Patients
             </Typography>
             <div className="flex gap-2 w-full md:w-auto justify-end">
-              {/* Search Icon Input */}
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -528,7 +541,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                   style={{ minWidth: 200 }}
                 />
               </div>
-              {/* Filter Icon Dropdown */}
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -582,7 +594,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                 const className = `py-3 px-5 ${key === patients.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                 return (
                   <tr key={patient._id || key}>
-                    {/* Patient Column */}
                     <td className={className}>
                       <div className="flex items-center gap-4">
                         <Avatar src={patient.img} alt={patient.firstName} size="sm" variant="rounded" />
@@ -596,7 +607,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                         </div>
                       </div>
                     </td>
-                    {/* Parents Column */}
                     <td className={className}>
                       <div className="flex items-center gap-4">
                         <div>
@@ -609,7 +619,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                         </div>
                       </div>
                     </td>
-                    {/* Appointment Status Column */}
                     <td className={className}>
                       <Typography className="text-xs font-semibold text-blue-gray-600">
                         {patient.job && patient.job[0] ? patient.job[0] : 'Non spécifié'}
@@ -618,7 +627,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                         Statut: {patient.appointments?.length > 0 ? 'A des rendez-vous' : 'Pas de rendez-vous'}
                       </Typography>
                     </td>
-                    {/* Date Column */}
                     <td className={className}>
                       {patient.appointments && patient.appointments.length > 0 ? (
                         <>
@@ -635,7 +643,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                         </Typography>
                       )}
                     </td>
-                    {/* Take Appointment */}
                     <td className={className}>
                       <button
                         onClick={() => handleOpen(patient)}
@@ -644,7 +651,6 @@ const handleAppointmentSubmit = async (appointmentData) => {
                         Prendre Rendez-vous
                       </button>
                     </td>
-                    {/* Actions Column */}
                     <td className={className}>
                       <div className="flex gap-2">
                         <IconButton
@@ -849,6 +855,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                           {...field}
                           label="Nom Complet *"
                           error={!!fieldState.error}
+                          success={!fieldState.error && fieldState.isTouched}
                         />
                         <FieldError error={fieldState.error} />
                       </>
@@ -866,6 +873,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                           label="Adresse Email *"
                           type="email"
                           error={!!fieldState.error}
+                          success={!fieldState.error && fieldState.isTouched}
                         />
                         <FieldError error={fieldState.error} />
                       </>
@@ -878,14 +886,20 @@ const handleAppointmentSubmit = async (appointmentData) => {
                   name="phoneNumber"
                   control={parentForm.control}
                   render={({ field, fieldState }) => (
-                    <>
-                      <Input
-                        {...field}
-                        label="Numéro de Téléphone *"
-                        error={!!fieldState.error}
+                    <div className="mb-4">
+                      <Typography variant="small" className="mb-1 block font-medium">
+                        Téléphone *
+                      </Typography>
+                      <InternationalPhoneInput
+                        value={field.value}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          parentForm.trigger('phoneNumber');
+                        }}
+                        onBlur={field.onBlur}
+                        error={fieldState.error?.message}
                       />
-                      <FieldError error={fieldState.error} />
-                    </>
+                    </div>
                   )}
                 />
               </div>
@@ -907,6 +921,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                           {...field}
                           label="Prénom *"
                           error={!!fieldState.error}
+                          success={!fieldState.error && fieldState.isTouched}
                         />
                         <FieldError error={fieldState.error} />
                       </>
@@ -923,6 +938,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                           {...field}
                           label="Nom de Famille *"
                           error={!!fieldState.error}
+                          success={!fieldState.error && fieldState.isTouched}
                         />
                         <FieldError error={fieldState.error} />
                       </>
@@ -942,6 +958,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                           label="Date de Naissance *"
                           type="date"
                           error={!!fieldState.error}
+                          success={!fieldState.error && fieldState.isTouched}
                         />
                         <FieldError error={fieldState.error} />
                       </>
@@ -956,10 +973,13 @@ const handleAppointmentSubmit = async (appointmentData) => {
                       <>
                         <select
                           {...field}
-                          className={`w-full p-3 border rounded-md focus:outline-none ${fieldState.error
-                            ? 'border-red-500 focus:border-red-500'
-                            : 'border-gray-300 focus:border-blue-500'
-                            }`}
+                          className={`w-full p-3 border rounded-md focus:outline-none ${
+                            fieldState.error
+                              ? 'border-red-500 focus:border-red-500'
+                              : !fieldState.error && fieldState.isTouched
+                              ? 'border-green-500 focus:border-green-500'
+                              : 'border-gray-300 focus:border-blue-500'
+                          }`}
                         >
                           <option value="">Sélectionner le Sexe *</option>
                           <option value="male">Masculin</option>
@@ -1011,6 +1031,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                 color="blue"
                 onClick={handleNextStep}
                 type="button"
+                disabled={!parentForm.formState.isValid}
               >
                 Suivant
               </Button>
@@ -1019,7 +1040,7 @@ const handleAppointmentSubmit = async (appointmentData) => {
                 variant="gradient"
                 color="green"
                 onClick={patientForm.handleSubmit(handleCreatePatient)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !patientForm.formState.isValid}
                 type="button"
               >
                 {isSubmitting ? 'Création...' : 'Créer le Patient'}
@@ -1037,7 +1058,6 @@ export default Patient;
 
 
 
-// english
 // import {
 //   Card,
 //   CardHeader,
@@ -1057,7 +1077,7 @@ export default Patient;
 //   Input,
 //   Textarea
 // } from "@material-tailwind/react";
-// import UpdatePatientModal from './componet/UpdatePatientModal'; 
+// import UpdatePatientModal from './component/UpdatePatientModal'; 
 
 // import { useEffect, useState } from "react";
 // import { useForm, Controller, set } from "react-hook-form";
@@ -1072,68 +1092,75 @@ export default Patient;
 // import { createAppointment, getAppointments } from "@/data/appointmentsData";
 // import axios from "axios";
 // import axiosInstance from "@/api/axiosInstance";
-// import PatientDetailsModal from "./componet/PatientDetailsModal";
+// import PatientDetailsModal from "./component/PatientDetailsModal";
 // import { useNavigate } from "react-router-dom";
 // import { getVaccinationRecords } from "@/data/getVaccinationRecords";
 // import { Icon } from "lucide-react";
 // import dayjs from "dayjs";
 
+// // Helper component for form field errors
+// const FieldError = ({ error }) =>
+//   error ? (
+//     <Typography variant="small" color="red" className="mt-1 text-xs">
+//       {error.message}
+//     </Typography>
+//   ) : null;
 
-// // Validation schemas
+// // Validation schemas - Messages en français
 // const parentInfoSchema = Yup.object().shape({
 //   fullName: Yup.string()
-//     .required('Full name is required')
-//     .min(2, 'Name must be at least 2 characters')
-//     .max(100, 'Name must not exceed 100 characters')
-//     .matches(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
+//     .required('Le nom complet est requis')
+//     .min(2, 'Le nom doit contenir au moins 2 caractères')
+//     .max(100, 'Le nom ne doit pas dépasser 100 caractères')
+//     .matches(/^[a-zA-Z\s'-]+$/, 'Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes')
 //     .trim(),
 //   email: Yup.string()
-//     .required('Email is required')
-//     .email('Please enter a valid email address')
-//     .max(254, 'Email must not exceed 254 characters')
+//     .required('L\'email est requis')
+//     .email('Veuillez entrer une adresse email valide')
+//     .max(254, 'L\'email ne doit pas dépasser 254 caractères')
 //     .lowercase()
 //     .trim(),
 //   phoneNumber: Yup.string()
-//     .required('Phone number is required')
-//     .matches(/^[\d\s\-\+\(\)]+$/, 'Please enter a valid phone number')
-//     .min(10, 'Phone number must be at least 10 digits')
-//     .max(20, 'Phone number must not exceed 20 characters')
+//     .required('Le numéro de téléphone est requis')
+//     .matches(/^[\d\s\-\+\(\)]+$/, 'Veuillez entrer un numéro de téléphone valide')
+//     .min(10, 'Le numéro de téléphone doit contenir au moins 10 chiffres')
+//     .max(20, 'Le numéro de téléphone ne doit pas dépasser 20 caractères')
 //     .trim()
 // });
 
 // const patientInfoSchema = Yup.object().shape({
 //   firstName: Yup.string()
-//     .required('First name is required')
-//     .min(2, 'First name must be at least 2 characters')
-//     .max(50, 'First name must not exceed 50 characters')
-//     .matches(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes')
+//     .required('Le prénom est requis')
+//     .min(2, 'Le prénom doit contenir au moins 2 caractères')
+//     .max(50, 'Le prénom ne doit pas dépasser 50 caractères')
+//     .matches(/^[a-zA-Z\s'-]+$/, 'Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes')
 //     .trim(),
 //   lastName: Yup.string()
-//     .required('Last name is required')
-//     .min(2, 'Last name must be at least 2 characters')
-//     .max(50, 'Last name must not exceed 50 characters')
-//     .matches(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes')
+//     .required('Le nom de famille est requis')
+//     .min(2, 'Le nom de famille doit contenir au moins 2 caractères')
+//     .max(50, 'Le nom de famille ne doit pas dépasser 50 caractères')
+//     .matches(/^[a-zA-Z\s'-]+$/, 'Le nom de famille ne peut contenir que des lettres, espaces, tirets et apostrophes')
 //     .trim(),
 //   birthDate: Yup.date()
-//     .required('Birth date is required')
-//     .max(new Date(), 'Birth date cannot be in the future')
-//     .min(new Date('1900-01-01'), 'Birth date cannot be before 1900'),
+//     .required('La date de naissance est requise')
+//     .max(new Date(), 'La date de naissance ne peut pas être dans le futur')
+//     .min(new Date('1900-01-01'), 'La date de naissance ne peut pas être antérieure à 1900'),
 //   gender: Yup.string()
-//     .required('Gender is required')
-//     .oneOf(['male', 'female'], 'Please select a valid gender'),
+//     .required('Le sexe est requis')
+//     .oneOf(['male', 'female'], 'Veuillez sélectionner un sexe valide'),
 // });
 
 // const appointmentSchema = Yup.object().shape({
 //   date: Yup.date()
-//     .required('Date is required')
-//     .min(new Date(), 'Appointment date cannot be in the past'),
+//     .required('La date est requise')
+//     .min(new Date(), 'La date du rendez-vous ne peut pas être dans le passé'),
 //   time: Yup.string()
-//     .required('Time is required')
-//     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please enter a valid time'),
+//     .required('L\'heure est requise')
+//     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Veuillez entrer une heure valide'),
 //   reason: Yup.string()
-//     .required('Reason for visit is required')
-//     .min(5, 'Reason must be at least 5 characters')
-//     .max(500, 'Reason must not exceed 500 characters')
+//     .required('Le motif de la visite est requis')
+//     .min(5, 'Le motif doit contenir au moins 5 caractères')
+//     .max(500, 'Le motif ne doit pas dépasser 500 caractères')
 //     .trim()
 // });
 
@@ -1165,15 +1192,12 @@ export default Patient;
 //   const [appointments, setAppointments] = useState([]);
 //   const [selectedDate, setSelectedDate] = useState(null);
 //   const [selectedTime, setSelectedTime] = useState(null);
-
 //   const [patientsLength, setPatientsLength] = useState(0);
 
-
-
 //   const [searchTerm, setSearchTerm] = useState('');
-// const [filterStatus, setFilterStatus] = useState('all');
-// const [currentPage, setCurrentPage] = useState(1);
-// const [patientsPerPage] = useState(5); // Adjust as needed
+//   const [filterStatus, setFilterStatus] = useState('all');
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const [patientsPerPage] = useState(5); // Adjust as needed
 
 
 
@@ -1249,10 +1273,10 @@ export default Patient;
 //   try {
 //     const updatedPatients = await getPatientTable();
 //     setPatients(updatedPatients);
-//     toast.success('Patient list refreshed');
+//     toast.success('Liste des patients actualisée');
 //   } catch (error) {
 //     console.error('Error refreshing patient list:', error);
-//     toast.error('Failed to refresh patient list');
+//     toast.error('Échec de l\'actualisation de la liste des patients');
 //   }
 // };
 
@@ -1306,7 +1330,7 @@ export default Patient;
 //       setAppointments(appointmentsData);
 //     } catch (error) {
 //       console.error('Error fetching appointments:', error);
-//       toast.error('Failed to load appointment data');
+//       toast.error('Échec du chargement des données de rendez-vous');
 //     }
 //   };
 
@@ -1336,13 +1360,13 @@ export default Patient;
 //     try {
 //       const isValid = await parentForm.trigger();
 //       if (!isValid) {
-//         toast.error('Please fix the errors in the parent information form');
+//         toast.error('Veuillez corriger les erreurs dans le formulaire des informations du parent');
 //         return;
 //       }
 //       setCurrentStep(2);
-//       toast.success('Parent information validated successfully');
+//       toast.success('Informations du parent validées avec succès');
 //     } catch (error) {
-//       toast.error('Validation error occurred');
+//       toast.error('Erreur de validation');
 //     }
 //   };
 
@@ -1373,11 +1397,11 @@ export default Patient;
 //       const response = await createPatient(sanitizedData);
 
 //       if (!response) {
-//         throw new Error('Failed to create patient');
+//         throw new Error('Échec de la création du patient');
 //       }
 //       setPatientsLength(patientsLength + 1);
 
-//       toast.success('Patient created successfully!', {
+//       toast.success('Patient créé avec succès !', {
 //         position: "top-right",
 //         autoClose: 3000,
 //       });
@@ -1389,7 +1413,7 @@ export default Patient;
 
 //     } catch (error) {
 //       console.error('Error creating patient:', error);
-//       // toast.error(`Error creating patient: ${error.message}`, {
+//       // toast.error(`Erreur lors de la création du patient: ${error.message}`, {
 //       //   position: "top-right",
 //       //   autoClose: 5000,
 //       // });
@@ -1405,15 +1429,15 @@ export default Patient;
 
 //   try {
 //     if (!selectedPatient || !selectedPatient.patientId) {
-//       throw new Error('No patient selected or patient ID missing');
+//       throw new Error('Aucun patient sélectionné ou ID patient manquant');
 //     }
 
 //     if (!selectedDate) {
-//       throw new Error('Please select a date');
+//       throw new Error('Veuillez sélectionner une date');
 //     }
 
 //     if (!selectedTime) {
-//       throw new Error('Please select a time');
+//       throw new Error('Veuillez sélectionner une heure');
 //     }
 
 //     // Properly format the date as YYYY-MM-DD
@@ -1432,10 +1456,10 @@ export default Patient;
 //     const res = await createAppointment(sanitizedAppointmentData);
 
 //     if (res && res.error) {
-//       throw new Error(res.error || 'Failed to create appointment');
+//       throw new Error(res.error || 'Échec de la création du rendez-vous');
 //     }
   
-//     toast.success('Appointment booked successfully!', {
+//     toast.success('Rendez-vous réservé avec succès !', {
 //       position: "top-right",
 //       autoClose: 3000,
 //     });
@@ -1447,7 +1471,7 @@ export default Patient;
 
 //   } catch (error) {
 //     console.error('Error booking appointment:', error);
-//     toast.error(`Error booking appointment: ${error.message}`, {
+//     toast.error(`Erreur lors de la réservation du rendez-vous: ${error.message}`, {
 //       position: "top-right",
 //       autoClose: 5000,
 //     });
@@ -1496,34 +1520,33 @@ export default Patient;
 //     }
 //   };
 
-//   useEffect(() => async () => {
-//     const patientsData = await getPatientTable();
-//     setPatients(patientsData);
-//     console.log('Patients data fetched:', patientsData);
-//   }, [patientsLength]);
+//  useEffect(() => {
+//   const fetchPatients = async () => {
+//     try {
+//       const patientsData = await getPatientTable();
+//       setPatients(patientsData);
+//       console.log('Patients data fetched:', patientsData);
+//     } catch (error) {
+//       console.error('Error fetching patients:', error);
+//     }
+//   };
 
-//   // Helper component for form field errors
-//   const FieldError = ({ error }) => (
-//     error ? (
-//       <Typography variant="small" color="red" className="mt-1 text-xs">
-//         {error.message}
-//       </Typography>
-//     ) : null
-//   );
+//   fetchPatients();
+// }, [patientsLength]);
 
 
 //   const handleDelete = async (patientId) => {
 
 //     console.log('Deleting patient with ID:', patientId);
 //     if (!patientId) {
-//       toast.error('Patient ID is missing');
+//       toast.error('ID du patient manquant');
 //       return;
 //     }
 
 //     try {
 //       const response = await axiosInstance.delete(`patients/${patientId}`);
 
-//       toast.success('Patient deleted successfully!', {
+//       toast.success('Patient supprimé avec succès !', {
 //         position: "top-right",
 //         autoClose: 3000,
 //       });
@@ -1534,7 +1557,7 @@ export default Patient;
 
 //     } catch (error) {
 //       console.error('Error deleting patient:', error);
-//       toast.error(`Error deleting patient: ${error.message}`, {
+//       toast.error(`Erreur lors de la suppression du patient: ${error.message}`, {
 //         position: "top-right",
 //         autoClose: 5000,
 //       });
@@ -1561,7 +1584,7 @@ export default Patient;
 //                   </svg>
 //                 </span>
 //                 <Input
-//                   placeholder="Search patients..."
+//                   placeholder="Rechercher des patients..."
 //                   color="white"
 //                   value={searchTerm}
 //                   onChange={(e) => {
@@ -1588,9 +1611,9 @@ export default Patient;
 //                   className="pl-9 pr-3 py-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
 //                   style={{ minWidth: 180 }}
 //                 >
-//                   <option value="all">All Patients</option>
-//                   <option value="withAppointments">With Appointments</option>
-//                   <option value="withoutAppointments">Without Appointments</option>
+//                   <option value="all">Tous les Patients</option>
+//                   <option value="withAppointments">Avec Rendez-vous</option>
+//                   <option value="withoutAppointments">Sans Rendez-vous</option>
 //                 </select>
 //               </div>
 //               <Button
@@ -1600,7 +1623,7 @@ export default Patient;
 //                 onClick={handleCreateModalOpen}
 //                 className="ml-2"
 //               >
-//                 Add New Patient
+//                 Ajouter un Nouveau Patient
 //               </Button>
 //             </div>
 //           </div>
@@ -1609,7 +1632,7 @@ export default Patient;
 //           <table className="w-full min-w-[640px] table-auto">
 //             <thead>
 //               <tr>
-//                 {["patient", "parents", "appointments status", "Date", "Take Appointment", "Actions"].map((el) => (
+//                 {["patient", "parents", "statut des rendez-vous", "Date", "Prendre Rendez-vous", "Actions"].map((el) => (
 //                   <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
 //                     <Typography
 //                       variant="small"
@@ -1632,10 +1655,10 @@ export default Patient;
 //                         <Avatar src={patient.img} alt={patient.firstName} size="sm" variant="rounded" />
 //                         <div>
 //                           <Typography variant="small" color="blue-gray" className="font-semibold">
-//                             <span className="text-xs font-normal">first name :</span> {patient.firstName} <span className="text-xs font-normal">last name :</span> {patient.lastName}
+//                             <span className="text-xs font-normal">prénom :</span> {patient.firstName} <span className="text-xs font-normal">nom :</span> {patient.lastName}
 //                           </Typography>
 //                           <Typography className="text-xs font-normal text-blue-gray-500">
-//                             Gender: {patient.gender || 'Not specified'}
+//                             Sexe: {patient.gender === 'male' ? 'Masculin' : patient.gender === 'female' ? 'Féminin' : 'Non spécifié'}
 //                           </Typography>
 //                         </div>
 //                       </div>
@@ -1645,10 +1668,10 @@ export default Patient;
 //                       <div className="flex items-center gap-4">
 //                         <div>
 //                           <Typography variant="small" color="blue-gray" className="font-semibold">
-//                             {patient.parent.fullName || 'Not specified'}
+//                             {patient.parent?.fullName || 'Non spécifié'}
 //                           </Typography>
 //                           <Typography className="text-xs font-normal text-blue-gray-500">
-//                             {patient.parent.email || patient.email || 'No email'}
+//                             {patient.parent?.email || patient.email || 'Pas d\'email'}
 //                           </Typography>
 //                         </div>
 //                       </div>
@@ -1656,10 +1679,10 @@ export default Patient;
 //                     {/* Appointment Status Column */}
 //                     <td className={className}>
 //                       <Typography className="text-xs font-semibold text-blue-gray-600">
-//                         {patient.job && patient.job[0] ? patient.job[0] : 'Not specified'}
+//                         {patient.job && patient.job[0] ? patient.job[0] : 'Non spécifié'}
 //                       </Typography>
 //                       <Typography className="text-xs font-normal text-blue-gray-500">
-//                         Status: {patient.appointments?.length > 0 ? 'Has appointments' : 'No appointments'}
+//                         Statut: {patient.appointments?.length > 0 ? 'A des rendez-vous' : 'Pas de rendez-vous'}
 //                       </Typography>
 //                     </td>
 //                     {/* Date Column */}
@@ -1670,12 +1693,12 @@ export default Patient;
 //                             {patient.appointments[0].date}
 //                           </Typography>
 //                           <Typography className="text-xs font-semibold text-blue-gray-600">
-//                             at: {patient.appointments[0].time}
+//                             à: {patient.appointments[0].time}
 //                           </Typography>
 //                         </>
 //                       ) : (
 //                         <Typography className="text-xs font-normal text-blue-gray-400">
-//                           No appointment
+//                           Pas de rendez-vous
 //                         </Typography>
 //                       )}
 //                     </td>
@@ -1685,7 +1708,7 @@ export default Patient;
 //                         onClick={() => handleOpen(patient)}
 //                         className="text-xs font-normal text-blue-gray-500 underline ml-2 hover:text-blue-gray-700"
 //                       >
-//                         Get Appointment
+//                         Prendre Rendez-vous
 //                       </button>
 //                     </td>
 //                     {/* Actions Column */}
@@ -1696,7 +1719,7 @@ export default Patient;
 //                           color="blue"
 //                           size="sm"
 //                           onClick={() => handleUpdateModalOpen(patient)}
-//                           title="Edit"
+//                           title="Modifier"
 //                         >
 //                           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 //                             <path d="M15.232 5.232l3.536 3.536M9 11l6 6M3 21h6l11.293-11.293a1 1 0 000-1.414l-4.586-4.586a1 1 0 00-1.414 0L3 15v6z" />
@@ -1707,7 +1730,7 @@ export default Patient;
 //                           color="red"
 //                           size="sm"
 //                           onClick={() => handleDelete(patient._id)}
-//                           title="Delete"
+//                           title="Supprimer"
 //                         >
 //                           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 //                             <path d="M6 18L18 6M6 6l12 12" />
@@ -1718,7 +1741,7 @@ export default Patient;
 //                           color="green"
 //                           size="sm"
 //                           onClick={() => handleViewDetails(patient)}
-//                           title="View Details"
+//                           title="Voir les Détails"
 //                         >
 //                           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 //                             <circle cx="12" cy="12" r="10" />
@@ -1735,7 +1758,7 @@ export default Patient;
 //         </CardBody>
 //         <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
 //           <Typography variant="small" color="blue-gray" className="font-normal">
-//             Showing {indexOfFirstPatient + 1} to {Math.min(indexOfLastPatient, filteredPatients.length)} of {filteredPatients.length} entries
+//             Affichage de {indexOfFirstPatient + 1} à {Math.min(indexOfLastPatient, filteredPatients.length)} sur {filteredPatients.length} entrées
 //           </Typography>
 //           <div className="flex gap-2">
 //             <Button
@@ -1744,7 +1767,7 @@ export default Patient;
 //               disabled={currentPage === 1}
 //               onClick={() => paginate(currentPage - 1)}
 //             >
-//               Previous
+//               Précédent
 //             </Button>
 //             {Array.from({ length: Math.ceil(filteredPatients.length / patientsPerPage) }).map((_, index) => (
 //               <IconButton
@@ -1762,7 +1785,7 @@ export default Patient;
 //               disabled={currentPage === Math.ceil(filteredPatients.length / patientsPerPage)}
 //               onClick={() => paginate(currentPage + 1)}
 //             >
-//               Next
+//               Suivant
 //             </Button>
 //           </div>
 //         </CardFooter>
@@ -1778,7 +1801,7 @@ export default Patient;
 
 //       {/* Appointment Modal */}
 //       <Dialog open={open} handler={handleClose} size="xl" className="h-screen overflow-auto">
-//         <DialogHeader>Book Appointment</DialogHeader>
+//         <DialogHeader>Réserver un Rendez-vous</DialogHeader>
 //         <form onSubmit={appointmentForm.handleSubmit(handleAppointmentSubmit)}>
 //           <DialogBody className="flex flex-col gap-4">
 //             {selectedPatient && (
@@ -1786,7 +1809,7 @@ export default Patient;
 //                 <Typography variant="h6">Patient: {selectedPatient.name}</Typography>
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                   <div>
-//                     <Typography variant="h6" className="mb-2">Select Date</Typography>
+//                     <Typography variant="h6" className="mb-2">Sélectionner la Date</Typography>
 //                     <Calendar
 //                       onChange={handleDateChange}
 //                       value={selectedDate}
@@ -1797,7 +1820,7 @@ export default Patient;
 //                     />
 //                   </div>
 //                   <div>
-//                     <Typography variant="h6" className="mb-2">Available Time Slots</Typography>
+//                     <Typography variant="h6" className="mb-2">Créneaux Horaires Disponibles</Typography>
 //                     {selectedDate ? (
 //                       <div className="grid grid-cols-3 gap-2">
 //                         {TIME_SLOTS.map(time => (
@@ -1811,14 +1834,14 @@ export default Patient;
 //                           >
 //                             {time}
 //                             {isTimeSlotBooked(time) && (
-//                               <span className="ml-1 text-xs">(Booked)</span>
+//                               <span className="ml-1 text-xs">(Réservé)</span>
 //                             )}
 //                           </Button>
 //                         ))}
 //                       </div>
 //                     ) : (
 //                       <Typography variant="small" color="gray">
-//                         Please select a date first
+//                         Veuillez d'abord sélectionner une date
 //                       </Typography>
 //                     )}
 //                   </div>
@@ -1831,7 +1854,7 @@ export default Patient;
 //                       <>
 //                         <Textarea
 //                           {...field}
-//                           label="Reason for Visit *"
+//                           label="Motif de la Visite *"
 //                           error={!!fieldState.error}
 //                         />
 //                         <FieldError error={fieldState.error} />
@@ -1844,7 +1867,7 @@ export default Patient;
 //           </DialogBody>
 //           <DialogFooter className="flex justify-between">
 //             <Button variant="outlined" color="red" onClick={handleClose} type="button">
-//               Cancel
+//               Annuler
 //             </Button>
 //             <Button
 //               variant="gradient"
@@ -1853,7 +1876,7 @@ export default Patient;
 //               disabled={isSubmitting || !selectedDate || !selectedTime}
 //               onClick={handleAppointmentSubmit}
 //             >
-//               {isSubmitting ? 'Booking...' : 'Book Appointment'}
+//               {isSubmitting ? 'Réservation...' : 'Réserver le Rendez-vous'}
 //             </Button>
 //           </DialogFooter>
 //         </form>
@@ -1864,10 +1887,10 @@ export default Patient;
 //         <DialogHeader className="flex justify-between items-center">
 //           <div>
 //             <Typography variant="h5">
-//               {currentStep === 1 ? 'Parent Information' : 'Patient Information'}
+//               {currentStep === 1 ? 'Informations du Parent' : 'Informations du Patient'}
 //             </Typography>
 //             <Typography variant="small" color="gray" className="font-normal">
-//               Step {currentStep} of 2
+//               Étape {currentStep} sur 2
 //             </Typography>
 //           </div>
 //           <div className="flex gap-2">
@@ -1880,7 +1903,7 @@ export default Patient;
 //             // Parent Information Step
 //             <>
 //               <Typography variant="h6" color="blue-gray" className="mb-2">
-//                 Parent/Guardian Details
+//                 Détails du Parent/Tuteur
 //               </Typography>
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <div>
@@ -1891,7 +1914,7 @@ export default Patient;
 //                       <>
 //                         <Input
 //                           {...field}
-//                           label="Full Name *"
+//                           label="Nom Complet *"
 //                           error={!!fieldState.error}
 //                         />
 //                         <FieldError error={fieldState.error} />
@@ -1907,7 +1930,7 @@ export default Patient;
 //                       <>
 //                         <Input
 //                           {...field}
-//                           label="Email Address *"
+//                           label="Adresse Email *"
 //                           type="email"
 //                           error={!!fieldState.error}
 //                         />
@@ -1925,7 +1948,7 @@ export default Patient;
 //                     <>
 //                       <Input
 //                         {...field}
-//                         label="Phone Number *"
+//                         label="Numéro de Téléphone *"
 //                         error={!!fieldState.error}
 //                       />
 //                       <FieldError error={fieldState.error} />
@@ -1938,7 +1961,7 @@ export default Patient;
 //             // Patient Information Step
 //             <form onSubmit={patientForm.handleSubmit(handleCreatePatient)}>
 //               <Typography variant="h6" color="blue-gray" className="mb-4">
-//                 Patient Details
+//                 Détails du Patient
 //               </Typography>
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 //                 <div>
@@ -1949,7 +1972,7 @@ export default Patient;
 //                       <>
 //                         <Input
 //                           {...field}
-//                           label="First Name *"
+//                           label="Prénom *"
 //                           error={!!fieldState.error}
 //                         />
 //                         <FieldError error={fieldState.error} />
@@ -1965,7 +1988,7 @@ export default Patient;
 //                       <>
 //                         <Input
 //                           {...field}
-//                           label="Last Name *"
+//                           label="Nom de Famille *"
 //                           error={!!fieldState.error}
 //                         />
 //                         <FieldError error={fieldState.error} />
@@ -1983,7 +2006,7 @@ export default Patient;
 //                       <>
 //                         <Input
 //                           {...field}
-//                           label="Birth Date *"
+//                           label="Date de Naissance *"
 //                           type="date"
 //                           error={!!fieldState.error}
 //                         />
@@ -2005,9 +2028,9 @@ export default Patient;
 //                             : 'border-gray-300 focus:border-blue-500'
 //                             }`}
 //                         >
-//                           <option value="">Select Gender *</option>
-//                           <option value="male">Male</option>
-//                           <option value="female">Female</option>
+//                           <option value="">Sélectionner le Sexe *</option>
+//                           <option value="male">Masculin</option>
+//                           <option value="female">Féminin</option>
 //                         </select>
 //                         <FieldError error={fieldState.error} />
 //                       </>
@@ -2018,12 +2041,12 @@ export default Patient;
 //               {/* Summary of Parent Info */}
 //               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
 //                 <Typography variant="small" color="gray" className="font-semibold mb-2">
-//                   Parent Information Summary:
+//                   Résumé des Informations du Parent :
 //                 </Typography>
 //                 <Typography variant="small" color="gray">
-//                   <strong>Name:</strong> {parentForm.watch('fullName')}<br />
-//                   <strong>Email:</strong> {parentForm.watch('email')}<br />
-//                   <strong>Phone:</strong> {parentForm.watch('phoneNumber')}
+//                   <strong>Nom :</strong> {parentForm.watch('fullName')}<br />
+//                   <strong>Email :</strong> {parentForm.watch('email')}<br />
+//                   <strong>Téléphone :</strong> {parentForm.watch('phoneNumber')}
 //                 </Typography>
 //               </div>
 //             </form>
@@ -2036,7 +2059,7 @@ export default Patient;
 //             onClick={handleCreateModalClose}
 //             type="button"
 //           >
-//             Cancel
+//             Annuler
 //           </Button>
 //           <div className="flex gap-2">
 //             {currentStep === 2 && (
@@ -2046,7 +2069,7 @@ export default Patient;
 //                 onClick={handlePreviousStep}
 //                 type="button"
 //               >
-//                 Previous
+//                 Précédent
 //               </Button>
 //             )}
 //             {currentStep === 1 ? (
@@ -2056,7 +2079,7 @@ export default Patient;
 //                 onClick={handleNextStep}
 //                 type="button"
 //               >
-//                 Next
+//                 Suivant
 //               </Button>
 //             ) : (
 //               <Button
@@ -2066,7 +2089,7 @@ export default Patient;
 //                 disabled={isSubmitting}
 //                 type="button"
 //               >
-//                 {isSubmitting ? 'Creating...' : 'Create Patient'}
+//                 {isSubmitting ? 'Création...' : 'Créer le Patient'}
 //               </Button>
 //             )}
 //           </div>
