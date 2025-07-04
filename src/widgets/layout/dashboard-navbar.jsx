@@ -150,7 +150,11 @@ export function DashboardNavbar() {
               </IconButton>
             </MenuHandler>
             <MenuList className="w-max border-0">
+               
               <MenuItem className="flex items-center gap-3">
+                Pas de notifications
+              </MenuItem>
+              {/* <MenuItem className="flex items-center gap-3">
                 <Avatar
                   src="https://demos.creative-tim.com/material-dashboard/assets/img/team-2.jpg"
                   alt="item-1"
@@ -218,7 +222,7 @@ export function DashboardNavbar() {
                     <ClockIcon className="h-3.5 w-3.5" /> il y a 2 jours
                   </Typography>
                 </div>
-              </MenuItem>
+              </MenuItem> */}
             </MenuList>
           </Menu>
           <IconButton

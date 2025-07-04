@@ -11,15 +11,25 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import axiosInstance from "@/api/axiosInstance";
 import { useState } from "react";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 // Schéma de validation en français
 const schema = Yup.object({
   name: Yup.string().required("Le nom est requis"),
   email: Yup.string().email("Email invalide").required("L'email est requis"),
-  phone: Yup.string().required("Le numéro de téléphone est requis"),
+  phone: Yup.string()
+    .required("Le numéro de téléphone est requis")
+    .matches(
+      /^\+212[5-7]\d{8}$/,
+      "Format: +212612345678"
+    ),
   address: Yup.string().required("L'adresse est requise"),
-  password: Yup.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").required("Le mot de passe est requis"),
-  terms: Yup.boolean().oneOf([true], "Vous devez accepter les conditions"),
+  password: Yup.string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères")
+    .required("Le mot de passe est requis"),
+  terms: Yup.boolean()
+    .oneOf([true], "Vous devez accepter les conditions"),
 });
 
 export function SignUp() {
@@ -29,6 +39,9 @@ export function SignUp() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
+    trigger,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
@@ -37,16 +50,15 @@ export function SignUp() {
   const onSubmit = async (data) => {
     try {
       const payload = {
-        fullName: data.name,       // Renommer 'name' en 'fullName'
+        fullName: data.name,
         email: data.email,
-        phoneNumber: data.phone,   // Renommer 'phone' en 'phoneNumber'
+        phoneNumber: data.phone,
         address: data.address,
         password: data.password,
-        role: 'admin'               // Requis par le backend
+        role: 'admin'
       };
 
       const response = await axiosInstance.post("/auth/register/user", payload);
-      console.log("réponse", response.data);
       navigate("/auth/sign-in");
     } catch (err) {
       setServerError(err.response?.data?.message || "Échec de l'inscription");
@@ -82,6 +94,7 @@ export function SignUp() {
           className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
         >
           <div className="mb-1 flex flex-col gap-6">
+            {/* Email Field */}
             <div>
               <Typography variant="small" className="mb-1 font-medium">
                 Votre Email
@@ -89,13 +102,19 @@ export function SignUp() {
               <Input
                 {...register("email")}
                 type="email"
-                label="Email"
+                size="lg"
                 placeholder="nom@email.com"
                 error={!!errors.email}
+                className="!border-t-blue-gray-200 focus:!border-gray-900"
               />
-              <p className="text-red-500 text-sm">{errors.email?.message}</p>
+              {errors.email && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.email.message}
+                </Typography>
+              )}
             </div>
 
+            {/* Name Field */}
             <div>
               <Typography variant="small" className="mb-1 font-medium">
                 Votre Nom
@@ -103,27 +122,52 @@ export function SignUp() {
               <Input
                 {...register("name")}
                 type="text"
-                label="Nom"
+                size="lg"
                 placeholder="Jean Dupont"
                 error={!!errors.name}
+                className="!border-t-blue-gray-200 focus:!border-gray-900"
               />
-              <p className="text-red-500 text-sm">{errors.name?.message}</p>
+              {errors.name && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.name.message}
+                </Typography>
+              )}
             </div>
 
+            {/* Phone Field */}
             <div>
               <Typography variant="small" className="mb-1 font-medium">
                 Votre Numéro de Téléphone
               </Typography>
-              <Input
-                {...register("phone")}
-                type="tel"
-                label="Téléphone"
-                placeholder="+212 6 12 34 56 78"
-                error={!!errors.phone}
-              />
-              <p className="text-red-500 text-sm">{errors.phone?.message}</p>
+              <div className={`relative ${errors.phone ? 'border border-red-500' : 'border border-blue-gray-200'} rounded-lg`}>
+                <PhoneInput
+                  international
+                  defaultCountry="MA"
+                  value={watch("phone")}
+                  onChange={(value) => {
+                    setValue("phone", value);
+                    trigger("phone");
+                  }}
+                  onBlur={() => trigger("phone")}
+                  className="w-full p-3 bg-transparent focus:outline-none"
+                  countrySelectProps={{
+                    className: "border-none"
+                  }}
+                  placeholder="+212 612 345 678"
+                />
+              </div>
+              {errors.phone ? (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.phone.message}
+                </Typography>
+              ) : (
+                <Typography variant="small" color="gray" className="mt-1 text-xs">
+                  Format: +212612345678
+                </Typography>
+              )}
             </div>
 
+            {/* Address Field */}
             <div>
               <Typography variant="small" className="mb-1 font-medium">
                 Votre Adresse
@@ -131,13 +175,17 @@ export function SignUp() {
               <Input
                 {...register("address")}
                 type="text"
-                label="Adresse"
+                size="lg"
                 placeholder="123 Rue Principale"
                 error={!!errors.address}
+                className="!border-t-blue-gray-200 focus:!border-gray-900"
               />
-              <p className="text-red-500 text-sm">{errors.address?.message}</p>
+              {errors.address && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.address.message}
+                </Typography>
+              )}
             </div>
-
             <div>
               <Typography variant="small" className="mb-1 font-medium">
                 Votre Mot de Passe
@@ -145,14 +193,20 @@ export function SignUp() {
               <Input
                 {...register("password")}
                 type="password"
-                label="Mot de passe"
+                size="lg"
                 placeholder="********"
                 error={!!errors.password}
+                className="!border-t-blue-gray-200 focus:!border-gray-900"
               />
-              <p className="text-red-500 text-sm">{errors.password?.message}</p>
+              {errors.password && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.password.message}
+                </Typography>
+              )}
             </div>
           </div>
 
+          {/* Terms Checkbox */}
           <div className="mt-4">
             <Checkbox
               {...register("terms")}
@@ -166,11 +220,17 @@ export function SignUp() {
               }
               containerProps={{ className: "-ml-2.5" }}
             />
-            <p className="text-red-500 text-sm">{errors.terms?.message}</p>
+            {errors.terms && (
+              <Typography variant="small" color="red" className="mt-1">
+                {errors.terms.message}
+              </Typography>
+            )}
           </div>
 
           {serverError && (
-            <p className="text-red-500 text-sm mt-2">{serverError}</p>
+            <Typography variant="small" color="red" className="mt-2 text-center">
+              {serverError}
+            </Typography>
           )}
 
           <Button type="submit" className="mt-6" fullWidth>
@@ -193,8 +253,6 @@ export function SignUp() {
 }
 
 export default SignUp;
-
-
 
 // english
 // import {

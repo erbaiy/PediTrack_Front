@@ -1765,13 +1765,18 @@ export function PatientDetail() {
   }
   
   // Traitement des données du patient
-  const { patient } = state;
-  const patientAge = patient.age ? parseInt(patient.age) : 0;
-  
+  const { patient, age, tarifOfThisPatient } = state;
+
+
+  console.log("tariiiiiiiiiifffff", tarifOfThisPatient);
+
+  const patientAge = age ? parseInt(age) : 0;
+
   const patientData = useMemo(() => ({
     name: `${patient.firstName} ${patient.lastName}`,
     avatar: patient.img || "/img/default-avatar.jpg",
-    age: patient.age || "Non spécifié",
+    age: `${age} ans` || "Non spécifié",
+    tarif: tarifOfThisPatient || "Non spécifié",
     gender: patient.gender || "Non spécifié",
     bloodType: patient.bloodType || "Non spécifié",
     phoneNumber: patient.parent?.phoneNumber || "Non spécifié",
@@ -2921,6 +2926,8 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
     fetchGrowthRecords();
     fetchPrescriptions();
     fetchAppointments();
+
+    console.log("Fetching data for patient:", patientData);
   }, [fetchGrowthRecords, fetchPrescriptions, fetchAppointments]);
   
   useEffect(() => {
@@ -2975,7 +2982,7 @@ const exportPrescriptionPDF = useCallback(async (prescription) => {
                 </Typography>
                 <Typography variant="small" className="font-normal text-blue-gray-600">
                   {patientData.age} • {patientData.gender} • Groupe sanguin: {patientData.bloodType}
-                  • Tarif: {patientData.insuranceProvider || "Non renseigné"}
+                  • Tarif: {tarifOfThisPatient ? `${tarifOfThisPatient} MAD` : "Non renseigné"}
                 </Typography>
               </div>
             </div>

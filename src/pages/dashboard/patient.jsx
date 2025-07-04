@@ -230,11 +230,21 @@ export function Patient() {
 
   // Handlers
   const handleViewDetails = async (patient) => {
+
+    const age= dayjs().diff(dayjs(patient.birthDate), 'year');
+
+    const pricing = JSON.parse(localStorage.getItem('appointment_pricing_config') || '[]');
+    const appointmentType = patient.appointments && patient.appointments[0]?.type;
+    const tarifOfThisPatient = pricing.find(p => p.type === appointmentType)?.price || 0;
+    
     const vaccinations = await getVaccinationRecords(patient._id);
+
     navigate(`/dashboard/patients/details/${patient._id}`, {
       state: {
         patient,
-        vaccinations, 
+        age,
+        tarifOfThisPatient,
+        vaccinations,
         appointments: patient.appointments || []
       }
     });
@@ -349,7 +359,7 @@ export function Patient() {
         birthDate: patientData.birthDate,
         gender: patientData.gender,
         role: "parent",
-        address: 'swirate rhamna'
+        address: ''
       };
 
       const response = await createPatient(sanitizedData);
@@ -478,6 +488,7 @@ export function Patient() {
       try {
         const patientsData = await getPatientTable();
         setPatients(patientsData);
+        console.log('Patients fetched: again   -----', patientsData);
       } catch (error) {
         console.error('Error fetching patients:', error);
       }

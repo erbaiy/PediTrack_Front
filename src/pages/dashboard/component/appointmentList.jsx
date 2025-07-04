@@ -87,6 +87,7 @@ const AppointmentList = ({
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
 
   console.log('Filtered Appointments:', filteredAppointments);
+  
   // Helper functions
   const getPatientInfo = (patientId) => {
     return patients.find(p => p.patientId === patientId) || {
@@ -145,35 +146,25 @@ const AppointmentList = ({
             Liste des Rendez-vous
           </Typography>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <Select
-              label="Rechercher un patient"
-              value={searchTerm}
-              onChange={(value) => setSearchTerm(value)}
-              className="min-w-[200px]"
-              menuProps={{ className: "max-h-60 overflow-auto" }}
-              clearable
-            >
-              <Option value="">Tous les patients</Option>
-              {patients.map((patient) => (
-                <Option
-                  key={patient.patientId}
-                  value={`${patient.firstName} ${patient.lastName}`}
+            <div className="relative">
+              <Input
+                label="Rechercher un patient"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="min-w-[200px]"
+              />
+              {searchTerm && (
+                <Button
+                  variant="text"
+                  color="red"
+                  size="sm"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 min-w-0"
                 >
-                  {patient.firstName} {patient.lastName}
-                </Option>
-              ))}
-            </Select>
-            {searchTerm && (
-              <Button
-                variant="text"
-                color="red"
-                size="sm"
-                onClick={() => setSearchTerm("")}
-                className="ml-2"
-              >
-                <XMarkIcon className="h-4 w-4" />
-              </Button>
-            )}
+                  <XMarkIcon className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-3 mt-4">
@@ -182,8 +173,13 @@ const AppointmentList = ({
             value={filters.type?.toString() || "all"}
             onChange={(value) => setFilters({ ...filters, type: value })}
             className="min-w-[150px]"
-            menuProps={{ className: "max-h-60 overflow-auto" }}
-            clearable
+            menuProps={{ 
+              className: "z-[9999] max-h-60",
+              style: { zIndex: 9999 }
+            }}
+            containerProps={{
+              className: "min-w-[150px]"
+            }}
           >
             <Option value="all">Tous les Types</Option>
             {appointmentTypes.map((type) => (
@@ -197,8 +193,13 @@ const AppointmentList = ({
             value={filters.status}
             onChange={(value) => setFilters({ ...filters, status: value })}
             className="min-w-[150px]"
-            menuProps={{ className: "max-h-60 overflow-auto" }}
-            clearable
+            menuProps={{ 
+              className: "z-[9999] max-h-60",
+              style: { zIndex: 9999 }
+            }}
+            containerProps={{
+              className: "min-w-[150px]"
+            }}
           >
             <Option value="all">Tous les Statuts</Option>
             {statusOptions.map((status) => (
@@ -368,6 +369,10 @@ const AppointmentList = ({
                       setCurrentPage(1);
                     }}
                     className="!w-20"
+                    menuProps={{ 
+                      className: "z-[9999]",
+                      style: { zIndex: 9999 }
+                    }}
                   >
                     <Option value="5">5</Option>
                     <Option value="10">10</Option>
@@ -442,7 +447,8 @@ const AppointmentList = ({
 export default AppointmentList;
 
 
-// english
+
+// // appointmentList.jsx
 
 // import React, { useState, useEffect } from 'react';
 // import {
@@ -530,10 +536,11 @@ export default AppointmentList;
 //   const currentAppointments = filteredAppointments.slice(indexOfFirstItem, indexOfLastItem);
 //   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
 
+//   console.log('Filtered Appointments:', filteredAppointments);
 //   // Helper functions
 //   const getPatientInfo = (patientId) => {
 //     return patients.find(p => p.patientId === patientId) || {
-//       firstName: 'Unknown',
+//       firstName: 'Inconnu',
 //       lastName: 'Patient',
 //       img: '/img/team-2.jpeg'
 //     };
@@ -547,6 +554,26 @@ export default AppointmentList;
 //       checkup: 'yellow'
 //     };
 //     return colors[type] || 'gray';
+//   };
+
+//   const getStatusText = (status) => {
+//     const statusTexts = {
+//       pending: 'En attente',
+//       confirmed: 'Confirmé',
+//       cancelled: 'Annulé',
+//       completed: 'Terminé'
+//     };
+//     return statusTexts[status] || status;
+//   };
+
+//   const getTypeText = (type) => {
+//     const typeTexts = {
+//       consultation: 'Consultation',
+//       vaccination: 'Vaccination',
+//       surgery: 'Chirurgie',
+//       checkup: 'Contrôle'
+//     };
+//     return typeTexts[type] || type;
 //   };
 
 //   // Pagination controls
@@ -565,56 +592,72 @@ export default AppointmentList;
 //       <CardHeader floated={false} shadow={false} className="p-4 border-b">
 //         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 //           <Typography variant="h5" className="font-medium">
-//             Appointments List
+//             Liste des Rendez-vous
 //           </Typography>
-          
 //           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-//             <Input
-//               label="Search patients..."
+//             <Select
+//               label="Rechercher un patient"
 //               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//               icon={
-//                 <Tooltip content="Clear search">
-//                   <XMarkIcon 
-//                     className="h-5 w-5 cursor-pointer" 
-//                     onClick={() => setSearchTerm('')} 
-//                   />
-//                 </Tooltip>
-//               }
-//             />
+//               onChange={(value) => setSearchTerm(value)}
+//               className="min-w-[200px]"
+//               menuProps={{ className: "max-h-60 overflow-auto" }}
+//               clearable
+//             >
+//               <Option value="">Tous les patients</Option>
+//               {patients.map((patient) => (
+//                 <Option
+//                   key={patient.patientId}
+//                   value={`${patient.firstName} ${patient.lastName}`}
+//                 >
+//                   {patient.firstName} {patient.lastName}
+//                 </Option>
+//               ))}
+//             </Select>
+//             {searchTerm && (
+//               <Button
+//                 variant="text"
+//                 color="red"
+//                 size="sm"
+//                 onClick={() => setSearchTerm("")}
+//                 className="ml-2"
+//               >
+//                 <XMarkIcon className="h-4 w-4" />
+//               </Button>
+//             )}
 //           </div>
 //         </div>
-        
 //         <div className="flex flex-wrap gap-3 mt-4">
 //           <Select
-//             label="Filter by Type"
-//             value={filters.type}
-//             onChange={(value) => setFilters({...filters, type: value})}
+//             label="Filtrer par Type"
+//             value={filters.type?.toString() || "all"}
+//             onChange={(value) => setFilters({ ...filters, type: value })}
 //             className="min-w-[150px]"
+//             menuProps={{ className: "max-h-60 overflow-auto" }}
+//             clearable
 //           >
-//             <Option value="all">All Types</Option>
-//             {appointmentTypes.map(type => (
-//               <Option key={type} value={type} className="capitalize">
-//                 {type}
+//             <Option value="all">Tous les Types</Option>
+//             {appointmentTypes.map((type) => (
+//               <Option key={type} value={type?.toString()}>
+//                 {getTypeText(type)}
 //               </Option>
 //             ))}
 //           </Select>
-          
 //           <Select
-//             label="Filter by Status"
+//             label="Filtrer par Statut"
 //             value={filters.status}
-//             onChange={(value) => setFilters({...filters, status: value})}
+//             onChange={(value) => setFilters({ ...filters, status: value })}
 //             className="min-w-[150px]"
+//             menuProps={{ className: "max-h-60 overflow-auto" }}
+//             clearable
 //           >
-//             <Option value="all">All Statuses</Option>
-//             {statusOptions.map(status => (
-//               <Option key={status} value={status} className="capitalize">
-//                 {status}
+//             <Option value="all">Tous les Statuts</Option>
+//             {statusOptions.map((status) => (
+//               <Option key={status} value={status}>
+//                 {getStatusText(status)}
 //               </Option>
 //             ))}
 //           </Select>
-          
-//           {(filters.type !== 'all' || filters.status !== 'all' || searchTerm) && (
+//           {(filters.type !== "all" || filters.status !== "all" || searchTerm) && (
 //             <Button
 //               variant="outlined"
 //               color="red"
@@ -622,12 +665,11 @@ export default AppointmentList;
 //               onClick={resetFilters}
 //             >
 //               <XMarkIcon className="h-4 w-4" />
-//               Reset Filters
+//               Réinitialiser les Filtres
 //             </Button>
 //           )}
 //         </div>
 //       </CardHeader>
-      
 //       <CardBody className="p-0">
 //         <div className="overflow-x-auto">
 //           <table className="w-full min-w-max table-auto">
@@ -640,7 +682,7 @@ export default AppointmentList;
 //                 </th>
 //                 <th className="border-b border-blue-gray-50 p-4">
 //                   <Typography variant="small" color="blue-gray" className="font-bold">
-//                     Date & Time
+//                     Date et Heure
 //                   </Typography>
 //                 </th>
 //                 <th className="border-b border-blue-gray-50 p-4">
@@ -650,7 +692,7 @@ export default AppointmentList;
 //                 </th>
 //                 <th className="border-b border-blue-gray-50 p-4">
 //                   <Typography variant="small" color="blue-gray" className="font-bold">
-//                     Status
+//                     Statut
 //                   </Typography>
 //                 </th>
 //                 <th className="border-b border-blue-gray-50 p-4">
@@ -664,7 +706,10 @@ export default AppointmentList;
 //               {currentAppointments.map((appointment) => {
 //                 const patient = getPatientInfo(appointment.patientId);
 //                 const color = getAppointmentColor(appointment.type);
-//                 const fullDate = dayjs(`${appointment.date} ${appointment.time}`).format('MMM D, YYYY h:mm A');
+//                 const fullDate =
+//                   dayjs(appointment.date).format("DD MMM YYYY") +
+//                   " à " +
+//                   appointment.time;
 
 //                 return (
 //                   <tr key={appointment._id} className="hover:bg-blue-gray-50">
@@ -690,25 +735,26 @@ export default AppointmentList;
 //                       <Chip
 //                         variant="outlined"
 //                         size="sm"
-//                         value={appointment.type}
+//                         value={getTypeText(appointment.type)}
 //                         color={color}
-//                         className="capitalize"
 //                       />
 //                     </td>
 //                     <td className="p-4 border-b">
 //                       <Chip
 //                         size="sm"
-//                         value={appointment.status || 'pending'}
+//                         value={getStatusText(appointment.status || "pending")}
 //                         color={
-//                           appointment.status === 'confirmed' ? 'green' :
-//                           appointment.status === 'pending' ? 'amber' : 'red'
+//                           appointment.status === "confirmed"
+//                             ? "green"
+//                             : appointment.status === "pending"
+//                             ? "amber"
+//                             : "red"
 //                         }
-//                         className="capitalize"
 //                       />
 //                     </td>
 //                     <td className="p-4 border-b">
 //                       <div className="flex gap-2">
-//                         <Tooltip content="Edit appointment">
+//                         <Tooltip content="Modifier le rendez-vous">
 //                           <IconButton
 //                             variant="text"
 //                             size="sm"
@@ -718,7 +764,7 @@ export default AppointmentList;
 //                             <PencilIcon className="h-4 w-4" />
 //                           </IconButton>
 //                         </Tooltip>
-//                         <Tooltip content="Delete appointment">
+//                         <Tooltip content="Supprimer le rendez-vous">
 //                           <IconButton
 //                             variant="text"
 //                             size="sm"
@@ -735,31 +781,35 @@ export default AppointmentList;
 //               })}
 //             </tbody>
 //           </table>
-          
 //           {filteredAppointments.length === 0 ? (
 //             <div className="p-8 text-center">
 //               <Typography color="gray" className="font-normal">
-//                 {appointments.length === 0 
-//                   ? "No appointments available" 
-//                   : "No appointments match your filters"}
+//                 {appointments.length === 0
+//                   ? "Aucun rendez-vous disponible"
+//                   : "Aucun rendez-vous ne correspond à vos filtres"}
 //               </Typography>
 //               {appointments.length > 0 && (
-//                 <Button variant="text" color="blue" className="mt-2" onClick={resetFilters}>
-//                   Clear all filters
+//                 <Button
+//                   variant="text"
+//                   color="blue"
+//                   className="mt-2"
+//                   onClick={resetFilters}
+//                 >
+//                   Effacer tous les filtres
 //                 </Button>
 //               )}
 //             </div>
 //           ) : (
 //             <div className="flex items-center justify-between p-4 border-t">
 //               <Typography variant="small" color="gray">
-//                 Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredAppointments.length)} of{" "}
-//                 {filteredAppointments.length} entries
+//                 Affichage de {indexOfFirstItem + 1} à{" "}
+//                 {Math.min(indexOfLastItem, filteredAppointments.length)} sur{" "}
+//                 {filteredAppointments.length} entrées
 //               </Typography>
-              
 //               <div className="flex items-center gap-4">
 //                 <div className="flex items-center gap-2">
 //                   <Typography variant="small" color="gray">
-//                     Rows per page:
+//                     Lignes par page :
 //                   </Typography>
 //                   <Select
 //                     value={itemsPerPage.toString()}
@@ -774,7 +824,6 @@ export default AppointmentList;
 //                     <Option value="20">20</Option>
 //                   </Select>
 //                 </div>
-                
 //                 <div className="flex items-center gap-2">
 //                   <IconButton
 //                     variant="text"
@@ -784,7 +833,6 @@ export default AppointmentList;
 //                   >
 //                     <ChevronLeftIcon className="h-5 w-5" />
 //                   </IconButton>
-                  
 //                   <div className="flex items-center gap-1">
 //                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
 //                       let pageNum;
@@ -797,7 +845,6 @@ export default AppointmentList;
 //                       } else {
 //                         pageNum = currentPage - 2 + i;
 //                       }
-                      
 //                       return (
 //                         <IconButton
 //                           key={pageNum}
@@ -810,11 +857,9 @@ export default AppointmentList;
 //                         </IconButton>
 //                       );
 //                     })}
-                    
 //                     {totalPages > 5 && currentPage < totalPages - 2 && (
 //                       <Typography className="mx-1">...</Typography>
 //                     )}
-                    
 //                     {totalPages > 5 && currentPage < totalPages - 2 && (
 //                       <IconButton
 //                         variant={currentPage === totalPages ? "filled" : "text"}
@@ -826,7 +871,6 @@ export default AppointmentList;
 //                       </IconButton>
 //                     )}
 //                   </div>
-                  
 //                   <IconButton
 //                     variant="text"
 //                     size="sm"
@@ -846,3 +890,4 @@ export default AppointmentList;
 // };
 
 // export default AppointmentList;
+
