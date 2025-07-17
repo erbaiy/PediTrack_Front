@@ -12,11 +12,11 @@ export function Footer({ brandName, brandLink, routes }) {
           &copy; {year}, créé avec{" "}
           <HeartIcon className="-mt-0.5 inline-block h-3.5 w-3.5 text-red-600" /> par{" "}
           <a
-            href={'https://www.pchalle.com/'}
+            href={'https://youness-erbai.vercel.app/'}
             target="_blank"
             className="transition-colors hover:text-blue-500 font-bold"
           >
-            Y.pcHalle
+            Y.erbai
           </a>{" "}
           pour un web meilleur.
         </Typography>
