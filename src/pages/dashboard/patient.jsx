@@ -961,6 +961,7 @@ export function Patient() {
     
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div>
+    <label htmlFor="insurance">Assurance</label>
     <Controller
       name="insurance"
       control={parentForm.control}
